@@ -1745,20 +1745,43 @@ function parseGastosCSV(csvText,sheetName){
   const col=(...ks)=>{for(const k of ks){const i=hdr.findIndex(h=>h.includes(k));if(i>=0)return i;}return -1;};
   const iProv=col('proveedor','prov');
   const iVal=col('valor','monto','precio','total');
-  const pn=s=>parseFloat((s||'').replace(/\./g,'').replace(',','.'))||0;
+
+  // Smart Argentine number parser
+  // "5.670.000,00" → 5670000   "248.851,18" → 248851.18   "248851" → 248851
+  const pn=s=>{
+    if(!s) return 0;
+    s=String(s).trim().replace(/[$ ]/g,'');
+    if(!s) return 0;
+    const hasDot=s.includes('.');
+    const hasComma=s.includes(',');
+    if(hasDot&&hasComma){
+      // Argentine format: dots=thousands, comma=decimal
+      return parseFloat(s.replace(/\./g,'').replace(',','.')) || 0;
+    } else if(hasComma&&!hasDot){
+      // Comma as decimal separator
+      return parseFloat(s.replace(',','.')) || 0;
+    } else {
+      // Plain integer or dot-decimal
+      return parseFloat(s) || 0;
+    }
+  };
+
   const items=[];
   for(let i=1;i<lines.length;i++){
     const c=parseLine(lines[i]);
-    if(c.every(x=>!x||x.replace(/[​\s]/g,'')===''))continue;
+    if(c.every(x=>!x||x.replace(/[​\s]/g,'')==='')) continue;
     const con=(c[0]||'').replace(/^"|"$/g,'').trim();
-    if(!con)continue;
+    if(!con) continue;
     const val=pn(iVal>=0?c[iVal]:'');
-    if(!val)continue;
+    if(!val) continue;
     items.push({
       id:`gs_${sheetName.replace(/\W/g,'')}_${i}`,
-      source:'sheets',concepto:con,
+      source:'sheets',
+      concepto:con,
       proveedor:iProv>=0?(c[iProv]||'').replace(/^"|"$/g,'').trim():'',
-      monto:val,cat:sheetName,notas:''
+      monto:val,
+      cat:sheetName,
+      notas:''
     });
   }
   return items;
@@ -2011,7 +2034,16 @@ function parseStockCSV(csvText,category){
   const iPrecio=col('precio de venta','precio v','pvp');
   const iPrecML=col('precio ml','mercado');
   if(iNom<0) return [];
-  const pn=s=>parseFloat((s||'').replace(/\./g,'').replace(',','.'))||0;
+  const pn=s=>{
+    if(!s) return 0;
+    s=String(s).trim().replace(/[$ ]/g,'');
+    if(!s) return 0;
+    const hasDot=s.includes('.');
+    const hasComma=s.includes(',');
+    if(hasDot&&hasComma) return parseFloat(s.replace(/\./g,'').replace(',','.')) || 0;
+    if(hasComma&&!hasDot) return parseFloat(s.replace(',','.')) || 0;
+    return parseFloat(s) || 0;
+  };
   const items=[];
   for(let i=1;i<lines.length;i++){
     const c=parseLine(lines[i]);
