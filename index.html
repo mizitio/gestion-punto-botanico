@@ -549,6 +549,30 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
         <div class="fc"><label class="flbl">Descuento (%)</label><input type="number" class="finp" id="sDisc" placeholder="0" min="0" max="100" oninput="recalc()"></div>
         <div class="fc"><label class="flbl">Nota (opcional)</label><input type="text" class="finp" id="sNote" placeholder="Observación…"></div>
       </div>
+
+      <!-- DATOS DEL CLIENTE (colapsable) -->
+      <div style="margin-bottom:16px">
+        <button type="button" onclick="toggleClienteSection()" style="display:flex;align-items:center;gap:7px;background:none;border:none;cursor:pointer;padding:0;font-family:'Syne',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--sage)">
+          <svg id="clienteArrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition:.2s;transform:rotate(0deg)"><polyline points="9 18 15 12 9 6"/></svg>
+          Datos del cliente (opcional)
+        </button>
+        <div id="clienteSection" style="display:none;margin-top:10px;padding:14px;background:var(--cream);border-radius:var(--r-md);border:1.5px solid var(--mist)">
+          <div class="fr fr2" style="gap:12px">
+            <div class="fc" style="grid-column:1/-1">
+              <label class="flbl">Nombre del cliente</label>
+              <input type="text" class="finp" id="cNombre" placeholder="Nombre y apellido">
+            </div>
+            <div class="fc">
+              <label class="flbl">Teléfono</label>
+              <input type="tel" class="finp" id="cTel" placeholder="+54 11 ···">
+            </div>
+            <div class="fc">
+              <label class="flbl">DNI</label>
+              <input type="text" class="finp" id="cDni" placeholder="Número de documento">
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="fc">
         <label class="flbl">Medios de pago *</label>
         <div class="pay-chips" style="margin-bottom:10px">
@@ -912,14 +936,30 @@ function parseCSV(raw){
 /* ════════════════════════════════════
    SALES
 ════════════════════════════════════ */
+function toggleClienteSection(){
+  const sec=$('clienteSection');
+  const arrow=$('clienteArrow');
+  const open=sec.style.display==='none';
+  sec.style.display=open?'block':'none';
+  if(arrow) arrow.style.transform=open?'rotate(90deg)':'rotate(0deg)';
+  if(open) setTimeout(()=>$('cNombre')&&$('cNombre').focus(),50);
+}
+
 function openSaleModal(){
   _sLines=[];_pay='';_payLines=[];
   $('sUser').innerHTML='<option value="">— Seleccioná —</option>'+DB.users.map(u=>`<option value="${u.id}">${u.name} · ${u.role}</option>`).join('');
-  $('sDate').value=nowDT();
+  // Set exact current time (editable by user)
+  const now=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  $('sDate').value=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
   $('sDisc').value='';$('sNote').value='';
   document.querySelectorAll('.pay-chip').forEach(c=>c.classList.remove('sel'));
   const plb=$('payLinesBox'); if(plb) plb.style.display='none';
   const pb=$('payBalance'); if(pb) pb.style.display='none';
+  // Reset customer fields
+  ['cNombre','cTel','cDni'].forEach(id=>{const el=$(id);if(el)el.value='';});
+  const sec=$('clienteSection'); if(sec) sec.style.display='none';
+  const arrow=$('clienteArrow'); if(arrow) arrow.style.transform='rotate(0deg)';
   addLine();recalc();openOv('ovSale');
 }
 function addLine(){_sLines.push({itemId:'',qty:1,price:0});renderLines();}
@@ -930,6 +970,9 @@ function renderLines(){
   box.innerHTML=_sLines.map((ln,i)=>{
     const it=DB.items.find(x=>x.id===ln.itemId);
     const dispName=it?it.name:(ln.manualName||'');
+    // Price: use ln.price (auto-filled from stock on selection)
+    const priceVal=ln.price||'';
+    const priceHint=it&&it.price?` title="Precio de lista: ${fmt(it.price)}"`:'' ;
     return `<div class="sale-line">
       <div class="item-sw">
         <input class="item-si${dispName?' sel':''}"
@@ -945,12 +988,11 @@ function renderLines(){
         <div class="item-dd" id="dd_${i}"></div>
       </div>
       <input type="number" class="finp" value="${ln.qty}" min="1" placeholder="Cant." oninput="onQty(${i},this.value)" style="margin-top:0">
-      <input type="number" class="finp mono" value="${ln.price||''}" placeholder="Precio" oninput="onPrice(${i},this.value)">
+      <input type="number" class="finp mono" id="price_${i}" value="${priceVal}" placeholder="Precio"${priceHint} oninput="onPrice(${i},this.value)" style="${it&&it.price&&ln.price===it.price?'color:var(--forest);font-weight:600':''}">
       <button class="rm-line" onclick="rmLine(${i})" style="margin-top:2px">✕</button>
     </div>`;
   }).join('');
   recalc();
-  // Close dropdowns on outside click
   setTimeout(()=>{
     document.addEventListener('click', outsideClickHandler, {once:true});
   },0);
@@ -1053,6 +1095,13 @@ function selectItem(i, itemId){
   if(inp){inp.value=it.name;inp.classList.add('sel');}
   const ddEl=document.getElementById('dd_'+i);
   if(ddEl) ddEl.classList.remove('open');
+  // Fill price input directly without full re-render (avoids losing focus)
+  const priceInp=$('price_'+i);
+  if(priceInp){
+    priceInp.value=it.price;
+    priceInp.style.color='var(--forest)';
+    priceInp.style.fontWeight='600';
+  }
   recalc();
 }
 
@@ -1102,12 +1151,27 @@ function addPay(el){
     if(inp) inp.focus();
     return;
   }
-  _payLines.push({method, amount:0, cuotas:1});
+
+  // Calculate remaining amount to auto-fill
+  const sub=_sLines.reduce((s,l)=>s+(l.price*(l.qty||1)),0);
+  const d=parseFloat($('sDisc').value)||0;
+  const total=sub*(1-d/100);
+  const alreadyPaid=_payLines.reduce((s,p)=>s+p.amount,0);
+  const remaining=Math.max(0, total-alreadyPaid);
+
+  // Auto-fill remaining only if there's already at least one payment and amount > 0
+  const autoAmount=_payLines.length>=1 && remaining>0 ? remaining : 0;
+
+  _payLines.push({method, amount:autoAmount, cuotas:1});
   renderPayLines();
+
   // Focus the new amount input
   setTimeout(()=>{
     const inp = document.getElementById('payAmt_'+(_payLines.length-1));
-    if(inp){inp.focus();inp.select();}
+    if(inp){
+      inp.focus();
+      inp.select();
+    }
   },30);
 }
 
@@ -1144,6 +1208,20 @@ function renderPayLines(){
 
 function onPayAmt(i,v){
   _payLines[i].amount = parseFloat(v)||0;
+  // If there's a second payment with amount 0, auto-fill its remaining
+  const sub=_sLines.reduce((s,l)=>s+(l.price*(l.qty||1)),0);
+  const d=parseFloat($('sDisc').value)||0;
+  const total=sub*(1-d/100);
+  _payLines.forEach((p,idx)=>{
+    if(idx===i) return; // skip the one being edited
+    if(p.amount===0){
+      const others=_payLines.reduce((s,pp,ii)=>ii===idx?s:s+pp.amount,0);
+      const rem=Math.max(0,total-others);
+      _payLines[idx].amount=rem;
+      const inp=document.getElementById('payAmt_'+idx);
+      if(inp) inp.value=rem||'';
+    }
+  });
   recalc();
 }
 function onPayCuotas(i,v){
@@ -1188,7 +1266,12 @@ function confirmSale(){
     subtotal:sub,discount:d,total,
     payMethod,
     payLines:[..._payLines],
-    note:$('sNote').value,status:'Pagado'
+    note:$('sNote').value,status:'Pagado',
+    cliente:{
+      nombre:($('cNombre')||{value:''}).value.trim()||null,
+      tel:($('cTel')||{value:''}).value.trim()||null,
+      dni:($('cDni')||{value:''}).value.trim()||null,
+    }
   });
   closeOv('ovSale');
   toast(`Venta #${DB.sales[0].id} · ${fmt(total)}`);
@@ -1210,13 +1293,16 @@ function renderSales(rows=null){
   if(!data.length){tb.innerHTML='<tr><td class="td-empty" colspan="8">Sin ventas. Sincronizá desde Google Sheets o registrá una nueva.</td></tr>';return;}
   tb.innerHTML=data.map((s,i)=>{
     const isSheet=s.source==='sheets';
+    const cli=s.cliente&&s.cliente.nombre
+      ?`<div style="font-size:.7rem;color:var(--sage);margin-top:2px">👤 ${s.cliente.nombre}${s.cliente.tel?' · '+s.cliente.tel:''}${s.cliente.dni?' · DNI '+s.cliente.dni:''}</div>`
+      :'';
     return `<tr>
       <td class="td-m">#${data.length-i}</td>
       <td class="td-m">${s.date||'—'}</td>
       <td class="td-s" style="max-width:240px">${s.lines?s.lines.map(l=>l.itemName).join(', '):(s.desc||'—')}</td>
+      <td>${s.userName||'—'}${cli}</td>
       <td class="td-m"><strong style="color:var(--forest)">${fmt(s.total)}</strong></td>
       <td>${s.payMethod||'—'}</td>
-      <td class="td-m">${s.commission?fmt(s.commission):'—'}</td>
       <td class="ts tc" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.note||'—'}</td>
       <td><span class="bdg ${isSheet?'bdg-low':'bdg-ok'}" style="font-size:.6rem">${isSheet?'📊 Sheets':'✍ Manual'}</span></td>
     </tr>`;
