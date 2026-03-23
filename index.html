@@ -404,14 +404,61 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
     <!-- MÉTRICAS -->
     <div id="pg-metricas" class="page">
 
+      <!-- GRÁFICO ARRIBA -->
+      <div class="card mb20">
+        <div class="card-hd" style="flex-wrap:wrap;gap:12px">
+          <span class="card-ttl">Ventas vs. Gastos — punto de equilibrio</span>
+          <div class="flex g8" style="flex-wrap:wrap;align-items:center">
+            <select class="finp" style="width:110px" id="chartYear" onchange="renderChart()"></select>
+            <button class="btn btn-g btn-sm" id="syncGastosBtn" onclick="syncGastos()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+              Sincronizar Gastos
+            </button>
+          </div>
+        </div>
+        <div id="syncGastosStatus" style="display:none;padding:10px 24px;background:rgba(174,186,138,.15);border-bottom:1px solid var(--mist);font-size:.8rem;color:var(--forest);align-items:center;gap:10px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite;flex-shrink:0"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>
+          <span id="syncGastosMsg">Sincronizando gastos…</span>
+        </div>
+
+        <!-- KPIs rápidos del mes -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--mist);border-top:1px solid var(--mist)">
+          <div style="background:var(--paper);padding:16px 20px">
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--sage);margin-bottom:6px">Ventas del mes</div>
+            <div id="kpiVentasMes" style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--forest);font-weight:600">$0</div>
+          </div>
+          <div style="background:var(--paper);padding:16px 20px">
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--sage);margin-bottom:6px">Gastos del mes</div>
+            <div id="kpiGastosMes" style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--terra);font-weight:600">$0</div>
+          </div>
+          <div style="background:var(--paper);padding:16px 20px">
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--sage);margin-bottom:6px">Resultado</div>
+            <div id="kpiResultadoMes" style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600">$0</div>
+          </div>
+          <div style="background:var(--paper);padding:16px 20px">
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--sage);margin-bottom:6px">Punto equilibrio</div>
+            <div id="kpiEquilibrio" style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--forest);font-weight:600;margin-top:4px">—</div>
+          </div>
+        </div>
+
+        <div style="padding:20px 24px">
+          <canvas id="rentChart" height="110"></canvas>
+        </div>
+        <div class="t-scroll" style="border-top:1px solid var(--mist)"><table>
+          <thead><tr><th>Mes</th><th>Ventas</th><th>Gs. Fijos</th><th>Gs. Variables</th><th>Gs. Iniciales</th><th>Total egresos</th><th>Resultado</th></tr></thead>
+          <tbody id="tResumen"><tr><td class="td-empty" colspan="7">Sincronizá ventas y gastos para ver el resumen</td></tr></tbody>
+        </table></div>
+      </div>
+
+      <!-- GASTOS FIJOS -->
       <div class="card mb20">
         <div class="card-hd">
           <span class="card-ttl">Gastos fijos mensuales</span>
-          <button class="btn btn-p btn-sm" onclick="openOv('ovGastoFijo')">+ Agregar gasto fijo</button>
+          <button class="btn btn-p btn-sm" onclick="openOv('ovGastoFijo')">+ Agregar manual</button>
         </div>
         <div class="t-scroll"><table>
-          <thead><tr><th>Concepto</th><th>Monto/mes</th><th>Categoría</th><th>Notas</th><th></th></tr></thead>
-          <tbody id="tGF"><tr><td class="td-empty" colspan="5">Sin gastos fijos cargados.</td></tr></tbody>
+          <thead><tr><th>Concepto</th><th>Proveedor</th><th>Monto/mes</th><th>Categoría</th><th>Origen</th><th></th></tr></thead>
+          <tbody id="tGF"><tr><td class="td-empty" colspan="6">Sin gastos fijos. Sincronizá desde Google Sheets.</td></tr></tbody>
         </table></div>
         <div style="padding:12px 24px;border-top:1px solid var(--mist);display:flex;justify-content:space-between;align-items:center">
           <span class="ts tc">Total gastos fijos / mes</span>
@@ -419,36 +466,23 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
         </div>
       </div>
 
+      <!-- GASTOS VARIABLES / COMPRAS -->
       <div class="card mb20">
         <div class="card-hd">
-          <span class="card-ttl">Gastos variables</span>
+          <span class="card-ttl">Gastos variables y compras</span>
           <div class="flex g8">
             <input type="month" class="finp" style="width:160px" id="gvMes" onchange="renderGV()">
-            <button class="btn btn-p btn-sm" onclick="openOv('ovGastoVar')">+ Registrar gasto</button>
+            <button class="btn btn-p btn-sm" onclick="openOv('ovGastoVar')">+ Agregar manual</button>
           </div>
         </div>
         <div class="t-scroll"><table>
-          <thead><tr><th>Fecha</th><th>Concepto</th><th>Categoría</th><th>Monto</th><th>Notas</th><th></th></tr></thead>
-          <tbody id="tGV"><tr><td class="td-empty" colspan="6">Sin gastos variables.</td></tr></tbody>
+          <thead><tr><th>Concepto</th><th>Proveedor</th><th>Monto</th><th>Categoría</th><th>Origen</th><th></th></tr></thead>
+          <tbody id="tGV"><tr><td class="td-empty" colspan="6">Sin gastos variables. Sincronizá desde Google Sheets.</td></tr></tbody>
         </table></div>
         <div style="padding:12px 24px;border-top:1px solid var(--mist);display:flex;justify-content:space-between;align-items:center">
-          <span class="ts tc">Total gastos variables del mes</span>
+          <span class="ts tc">Total</span>
           <strong id="totalGV" style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--terra)">$0</strong>
         </div>
-      </div>
-
-      <div class="card mb20">
-        <div class="card-hd">
-          <span class="card-ttl">Ventas vs. Gastos — punto de equilibrio</span>
-          <select class="finp" style="width:110px" id="chartYear" onchange="renderChart()"></select>
-        </div>
-        <div style="padding:20px 24px">
-          <canvas id="rentChart" height="120"></canvas>
-        </div>
-        <div class="t-scroll" style="border-top:1px solid var(--mist)"><table>
-          <thead><tr><th>Mes</th><th>Ventas</th><th>Gs. Fijos</th><th>Gs. Variables</th><th>Costo mercadería</th><th>Total egresos</th><th>Resultado</th></tr></thead>
-          <tbody id="tResumen"></tbody>
-        </table></div>
       </div>
 
     </div>
@@ -1278,39 +1312,124 @@ function saveGF(){
 function delGF(id){if(!confirm('¿Eliminar?'))return;DB.gastosFijos=DB.gastosFijos.filter(x=>x.id!==id);renderGF();renderChart();toast('Eliminado','warn');}
 function renderGF(){
   const tb=$('tGF');
-  if(!DB.gastosFijos.length){tb.innerHTML='<tr><td class="td-empty" colspan="5">Sin gastos fijos.</td></tr>';$('totalGF').textContent=fmt(0);return;}
+  if(!DB.gastosFijos.length){tb.innerHTML='<tr><td class="td-empty" colspan="6">Sin gastos fijos. Sincronizá desde Google Sheets o agregá uno.</td></tr>';$('totalGF').textContent=fmt(0);return;}
   tb.innerHTML=DB.gastosFijos.map(g=>`<tr>
     <td class="td-s">${g.concepto}</td>
+    <td class="ts tc">${g.proveedor||'—'}</td>
     <td class="td-m"><strong>${fmt(g.monto)}</strong></td>
-    <td><span class="bdg bdg-ok">${g.cat}</span></td>
-    <td class="ts tc">${g.notas||'—'}</td>
-    <td><button class="btn btn-d btn-sm btn-ic" onclick="delGF('${g.id}')">✕</button></td>
+    <td><span class="bdg bdg-ok" style="font-size:.65rem">${g.cat}</span></td>
+    <td><span class="bdg" style="font-size:.58rem;background:${g.source==='sheets'?'rgba(238,168,59,.15)':'rgba(19,75,66,.08)'};color:${g.source==='sheets'?'#9a6a00':'var(--forest)'}">${g.source==='sheets'?'📊 Sheets':'✍ Manual'}</span></td>
+    <td>${g.source!=='sheets'?`<button class="btn btn-d btn-sm btn-ic" onclick="delGF('${g.id}')">✕</button>`:''}</td>
   </tr>`).join('');
   $('totalGF').textContent=fmt(DB.gastosFijos.reduce((s,g)=>s+g.monto,0));
 }
 
-// ── Gastos Variables ──
-function saveGV(){
-  const con=$('gvCon').value.trim(), monto=parseFloat($('gvMonto').value), fecha=$('gvFecha').value;
-  if(!con||!monto||!fecha){toast('Fecha, concepto y monto requeridos','err');return;}
-  DB.gastosVar.push({id:uid(),fecha,concepto:con,cat:$('gvCat').value,monto,notas:$('gvNot').value.trim()});
-  closeOv('ovGastoVar');renderGV();renderChart();toast('Gasto variable registrado');
-}
-function delGV(id){if(!confirm('¿Eliminar?'))return;DB.gastosVar=DB.gastosVar.filter(x=>x.id!==id);renderGV();renderChart();toast('Eliminado','warn');}
 function renderGV(){
-  const mes=$('gvMes').value;
-  const data=mes?DB.gastosVar.filter(g=>g.fecha.startsWith(mes)):DB.gastosVar;
+  const mes=$('gvMes')?$('gvMes').value:'';
+  const data=mes?DB.gastosVar.filter(g=>g.cat&&g.fecha&&g.fecha.startsWith?.(mes)||(!g.fecha&&true)):DB.gastosVar;
   const tb=$('tGV');
-  if(!data.length){tb.innerHTML='<tr><td class="td-empty" colspan="6">Sin gastos variables.</td></tr>';$('totalGV').textContent=fmt(0);return;}
+  if(!data.length){tb.innerHTML='<tr><td class="td-empty" colspan="6">Sin gastos variables. Sincronizá desde Google Sheets.</td></tr>';$('totalGV').textContent=fmt(0);return;}
   tb.innerHTML=data.map(g=>`<tr>
-    <td class="td-m">${g.fecha}</td>
     <td class="td-s">${g.concepto}</td>
-    <td><span class="bdg bdg-low">${g.cat}</span></td>
+    <td class="ts tc">${g.proveedor||g.notas||'—'}</td>
     <td class="td-m"><strong style="color:var(--terra)">${fmt(g.monto)}</strong></td>
-    <td class="ts tc">${g.notas||'—'}</td>
-    <td><button class="btn btn-d btn-sm btn-ic" onclick="delGV('${g.id}')">✕</button></td>
+    <td><span class="bdg bdg-low" style="font-size:.65rem">${g.cat}</span></td>
+    <td><span class="bdg" style="font-size:.58rem;background:${g.source==='sheets'?'rgba(238,168,59,.15)':'rgba(19,75,66,.08)'};color:${g.source==='sheets'?'#9a6a00':'var(--forest)'}">${g.source==='sheets'?'📊 Sheets':'✍ Manual'}</span></td>
+    <td>${g.source!=='sheets'?`<button class="btn btn-d btn-sm btn-ic" onclick="delGV('${g.id}')">✕</button>`:''}</td>
   </tr>`).join('');
   $('totalGV').textContent=fmt(data.reduce((s,g)=>s+g.monto,0));
+}
+
+// ── Gastos Variables manual ──
+function saveGV(){
+  const con=$('gvCon').value.trim(),monto=parseFloat($('gvMonto').value),fecha=$('gvFecha').value;
+  if(!con||!monto||!fecha){toast('Fecha, concepto y monto requeridos','err');return;}
+  DB.gastosVar.push({id:uid(),fecha,concepto:con,cat:$('gvCat').value,monto,proveedor:'',notas:$('gvNot').value.trim(),source:'manual'});
+  closeOv('ovGastoVar');renderGV();renderChart();toast('Gasto registrado');
+}
+function delGV(id){if(!confirm('¿Eliminar?'))return;DB.gastosVar=DB.gastosVar.filter(x=>x.id!==id);renderGV();renderChart();toast('Eliminado','warn');}
+
+/* ════════════════════════════════════
+   GASTOS SHEETS SYNC
+   Sheet: 1T-3Ww3TFveGGN8sZdhoyBXhaYS-w4FndMW-m_D-NNLY
+════════════════════════════════════ */
+const GASTOS_SHEET_ID='1T-3Ww3TFveGGN8sZdhoyBXhaYS-w4FndMW-m_D-NNLY';
+
+function showGastosSyncStatus(msg,visible=true){
+  const el=$('syncGastosStatus');if(!el)return;
+  el.style.display=visible?'flex':'none';
+  if($('syncGastosMsg'))$('syncGastosMsg').textContent=msg;
+}
+async function fetchGastosSheet(sheetName){
+  const url=`https://docs.google.com/spreadsheets/d/${GASTOS_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+  const resp=await fetch(url);
+  if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const text=await resp.text();
+  if(text.trim().startsWith('<!')) throw new Error('hoja no encontrada');
+  return text;
+}
+function parseGastosCSV(csvText,sheetName){
+  const lines=csvText.split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length<2) return [];
+  function parseLine(line){
+    const r=[];let cur='';let inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
+      else if(c===','&&!inQ){r.push(cur.trim());cur='';}else cur+=c;
+    }
+    r.push(cur.trim());return r;
+  }
+  const hdr=parseLine(lines[0]).map(h=>h.toLowerCase().replace(/["""´`​]/g,'').trim());
+  const col=(...ks)=>{for(const k of ks){const i=hdr.findIndex(h=>h.includes(k));if(i>=0)return i;}return -1;};
+  const iProv=col('proveedor','prov');
+  const iVal=col('valor','monto','precio','total');
+  const pn=s=>parseFloat((s||'').replace(/\./g,'').replace(',','.'))||0;
+  const items=[];
+  for(let i=1;i<lines.length;i++){
+    const c=parseLine(lines[i]);
+    if(c.every(x=>!x||x.replace(/[​\s]/g,'')===''))continue;
+    const con=(c[0]||'').replace(/^"|"$/g,'').trim();
+    if(!con)continue;
+    const val=pn(iVal>=0?c[iVal]:'');
+    if(!val)continue;
+    items.push({
+      id:`gs_${sheetName.replace(/\W/g,'')}_${i}`,
+      source:'sheets',concepto:con,
+      proveedor:iProv>=0?(c[iProv]||'').replace(/^"|"$/g,'').trim():'',
+      monto:val,cat:sheetName,notas:''
+    });
+  }
+  return items;
+}
+async function syncGastos(){
+  const btn=$('syncGastosBtn');
+  if(btn){btn.disabled=true;btn.style.opacity='.6';}
+  showGastosSyncStatus('Conectando con Google Sheets…');
+  try{
+    DB.gastosFijos=DB.gastosFijos.filter(g=>g.source!=='sheets');
+    DB.gastosVar=DB.gastosVar.filter(g=>g.source!=='sheets');
+    let totalF=0,totalV=0;
+    // Fijos
+    showGastosSyncStatus('Importando gastos fijos mensuales…');
+    try{const csv=await fetchGastosSheet('Gastos fijos mensuales');const items=parseGastosCSV(csv,'Gastos fijos mensuales');DB.gastosFijos.push(...items);totalF+=items.length;}
+    catch(e){console.warn('Fijos:',e.message);}
+    // Iniciales y compras → variables
+    const varTabs=['Gastos iniciales','Compras decoracion','Compras plantas y macetas','Compras plantas y macetas para paisajismo'];
+    for(const tab of varTabs){
+      showGastosSyncStatus(`Importando: ${tab}…`);
+      try{const csv=await fetchGastosSheet(tab);const items=parseGastosCSV(csv,tab);DB.gastosVar.push(...items);totalV+=items.length;}
+      catch(e){console.warn(tab,e.message);}
+    }
+    showGastosSyncStatus(`✓ ${totalF} fijos + ${totalV} variables importados`);
+    setTimeout(()=>showGastosSyncStatus('',false),5000);
+    toast(`${totalF+totalV} gastos sincronizados desde Google Sheets`);
+    renderGF();renderGV();renderChart();
+  }catch(err){
+    showGastosSyncStatus('⛔ Error: '+err.message);
+    setTimeout(()=>showGastosSyncStatus('',false),5000);
+    toast('Error: '+err.message,'err');
+  }finally{if(btn){btn.disabled=false;btn.style.opacity='1';}}
 }
 
 // ── Chart ──
@@ -1322,15 +1441,18 @@ function getMonthlyData(year){
   return MESES.map((_,m)=>{
     const ym=`${year}-${String(m+1).padStart(2,'0')}`;
     const mm=String(m+1).padStart(2,'0');
-    // Match both YYYY-MM-* (manual) and DD/MM/YYYY (sheets)
     const monthSales=DB.sales.filter(s=>{
       if(!s.date) return false;
-      if(s.source==='sheets') return s.date.endsWith(`/${mm}/${year}`)||s.date.match(new RegExp(`\/${mm}\/${String(year).slice(-2)}$`));
+      if(s.source==='sheets') return s.date.endsWith(`/${mm}/${year}`)||s.date.match(new RegExp(`/${mm}/${String(year).slice(-2)}$`));
       return s.date.startsWith(ym);
     });
     const ventas=monthSales.reduce((s,v)=>s+v.total,0);
-    const gv=DB.gastosVar.filter(g=>g.fecha.startsWith(ym)).reduce((s,g)=>s+g.monto,0);
+    // gastos variables del mes (sheets gastos don't have fecha, count all)
+    const gvSheets=DB.gastosVar.filter(g=>g.source==='sheets').reduce((s,g)=>s+g.monto,0);
+    const gvManual=DB.gastosVar.filter(g=>g.source!=='sheets'&&g.fecha&&g.fecha.startsWith(ym)).reduce((s,g)=>s+g.monto,0);
+    const gv=gvManual+(m===0?gvSheets:0); // spread sheets variables into first month only if no fecha
     const costo=monthSales.reduce((sum,sale)=>{
+
       if(!sale.lines) return sum;
       return sum+sale.lines.reduce((ls,ln)=>{
         const it=DB.items.find(x=>x.id===ln.itemId);
@@ -1345,28 +1467,51 @@ function getMonthlyData(year){
 function renderChart(){
   const yearSel=$('chartYear');
   if(!yearSel) return;
-  // populate years
-  const yrs=[...new Set([...DB.sales.map(s=>s.date.slice(0,4)),...DB.gastosVar.map(g=>g.fecha.slice(0,4)),String(new Date().getFullYear())])].sort();
+  // Collect years from sales (handle both date formats) and current year
+  const salesYears=DB.sales.map(s=>{
+    if(!s.date) return null;
+    if(s.source==='sheets'){const p=s.date.split('/');return p.length>=3?p[2]:null;}
+    return s.date.slice(0,4);
+  }).filter(Boolean);
+  const yrs=[...new Set([...salesYears,String(new Date().getFullYear())])].sort();
   const curY=yearSel.value||yrs[yrs.length-1];
   yearSel.innerHTML=yrs.map(y=>`<option value="${y}" ${y===curY?'selected':''}>${y}</option>`).join('');
   const data=getMonthlyData(curY);
 
-  // render summary table
-  const tb=$('tResumen');
-  tb.innerHTML=data.map((d,i)=>{
-    const pos=d.resultado>=0;
-    return `<tr>
-      <td><strong>${MESES[i]}</strong></td>
-      <td class="td-m" style="color:var(--forest)">${fmt(d.ventas)}</td>
-      <td class="td-m">${fmt(d.gf)}</td>
-      <td class="td-m">${fmt(d.gv)}</td>
-      <td class="td-m">${fmt(d.costo)}</td>
-      <td class="td-m">${fmt(d.totalEgresos)}</td>
-      <td class="td-m"><strong style="color:${pos?'var(--forest)':'var(--rust)'}">${pos?'+':''}${fmt(d.resultado)}</strong></td>
-    </tr>`;
-  }).join('');
+  // Update KPI cards for current month
+  const curM=new Date().getMonth();
+  const curData=data[curM];
+  if($('kpiVentasMes'))$('kpiVentasMes').textContent=fmt(curData.ventas);
+  if($('kpiGastosMes'))$('kpiGastosMes').textContent=fmt(curData.totalEgresos);
+  const res=curData.resultado;
+  const kpiRes=$('kpiResultadoMes');
+  if(kpiRes){kpiRes.textContent=(res>=0?'+':'')+fmt(res);kpiRes.style.color=res>=0?'var(--forest)':'var(--rust)';}
+  // Punto de equilibrio: mes donde ventas supera gastos por primera vez
+  const eqMonth=data.findIndex(d=>d.ventas>0&&d.resultado>=0);
+  if($('kpiEquilibrio'))$('kpiEquilibrio').textContent=eqMonth>=0?`${MESES[eqMonth]} ${curY}`:'Aún no alcanzado';
 
-  // Chart.js via CDN
+  // Render summary table — only months with data
+  const tb=$('tResumen');
+  const hasData=data.some(d=>d.ventas>0||d.totalEgresos>0);
+  if(!hasData){
+    tb.innerHTML='<tr><td class="td-empty" colspan="7">Sincronizá ventas y gastos para ver el resumen</td></tr>';
+  } else {
+    tb.innerHTML=data.map((d,i)=>{
+      if(d.ventas===0&&d.totalEgresos===0) return '';
+      const pos=d.resultado>=0;
+      return `<tr>
+        <td><strong>${MESES[i]}</strong></td>
+        <td class="td-m" style="color:var(--forest);font-weight:600">${fmt(d.ventas)}</td>
+        <td class="td-m">${fmt(d.gf)}</td>
+        <td class="td-m">${fmt(d.gv)}</td>
+        <td class="td-m">${fmt(d.costo)}</td>
+        <td class="td-m">${fmt(d.totalEgresos)}</td>
+        <td class="td-m"><strong style="color:${pos?'var(--forest)':'var(--rust)'}">${pos?'+':''}${fmt(d.resultado)}</strong></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Load Chart.js if needed, then draw
   if(!window.Chart){
     const s=document.createElement('script');
     s.src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js';
