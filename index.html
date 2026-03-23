@@ -367,8 +367,8 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
         </div>
         <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
         <div class="t-scroll"><table>
-          <thead><tr><th>#</th><th>Fecha</th><th>Descripción</th><th>Valor</th><th>Medio de pago</th><th>Comisión</th><th>Nota</th><th>Origen</th></tr></thead>
-          <tbody id="salesT"><tr><td class="td-empty" colspan="8">Sin ventas. Sincronizá desde Google Sheets o registrá una venta.</td></tr></tbody>
+          <thead><tr><th>#</th><th>Fecha</th><th>Vendedor</th><th>Descripción</th><th style="text-align:right">Valor</th><th>Medio de pago</th><th>Desc.</th><th>Cliente</th><th>Notas</th></tr></thead>
+          <tbody id="salesT"><tr><td class="td-empty" colspan="9">Sin ventas. Sincronizá desde Google Sheets o registrá una venta.</td></tr></tbody>
         </table></div>
       </div>
     </div>
@@ -1275,36 +1275,51 @@ function confirmSale(){
   });
   closeOv('ovSale');
   toast(`Venta #${DB.sales[0].id} · ${fmt(total)}`);
-  // ── Escribir en Google Sheets ──
+  // ── Escribir en Google Sheets con nuevo formato ──
   const sale=DB.sales[0];
+  const desc=sale.lines.map(l=>l.itemName+(l.qty>1?' x'+l.qty:'')).join(', ');
+  // Formatear fecha para el sheet: DD/MM/YYYY HH:MM
+  const rawDate=new Date(sale.date);
+  const pad=n=>String(n).padStart(2,'0');
+  const fechaSheet=isNaN(rawDate)?sale.date:`${pad(rawDate.getDate())}/${pad(rawDate.getMonth()+1)}/${rawDate.getFullYear()} ${pad(rawDate.getHours())}:${pad(rawDate.getMinutes())}`;
   postToScript({
-    action:'addVenta',
-    date:   sale.date,
-    desc:   sale.lines.map(l=>l.itemName+(l.qty>1?' x'+l.qty:'')).join(', '),
-    total:  sale.total,
+    action:    'addVenta',
+    date:      fechaSheet,
+    vendedor:  sale.userName||'—',
+    desc,
+    total:     sale.total,
     payMethod: sale.payMethod,
-    commission: 0,
-    note:   sale.note||''
-  }).then(r=>{ if(!r.ok) console.warn('No se pudo escribir en Sheets:', r.error); });
+    discount:  sale.discount||0,
+    cliente:   sale.cliente?.nombre||(sale.cliente?.tel||''),
+    note:      sale.note||''
+  }).then(r=>{ if(r&&!r.ok) console.warn('No se pudo escribir en Sheets:', r.error); });
   refreshDash();renderSales();renderStock();
 }
 function renderSales(rows=null){
   const data=rows||DB.sales;const tb=$('salesT');
-  if(!data.length){tb.innerHTML='<tr><td class="td-empty" colspan="8">Sin ventas. Sincronizá desde Google Sheets o registrá una nueva.</td></tr>';return;}
+  if(!data.length){tb.innerHTML='<tr><td class="td-empty" colspan="9">Sin ventas. Sincronizá desde Google Sheets o registrá una nueva.</td></tr>';return;}
   tb.innerHTML=data.map((s,i)=>{
     const isSheet=s.source==='sheets';
+    // Cliente display
     const cli=s.cliente&&s.cliente.nombre
-      ?`<div style="font-size:.7rem;color:var(--sage);margin-top:2px">👤 ${s.cliente.nombre}${s.cliente.tel?' · '+s.cliente.tel:''}${s.cliente.dni?' · DNI '+s.cliente.dni:''}</div>`
-      :'';
+      ?`${s.cliente.nombre}${s.cliente.tel?'<br><span style="font-size:.7rem;color:var(--sage)">'+s.cliente.tel+'</span>':''}${s.cliente.dni?'<span style="font-size:.7rem;color:var(--sage)"> · DNI '+s.cliente.dni+'</span>':''}`
+      :(isSheet&&s.clienteNombre?s.clienteNombre:'—');
+    // Descripción
+    const desc=s.lines?s.lines.map(l=>l.itemName).join(', '):(s.desc||'—');
+    // Descuento
+    const disc=s.discount?s.discount+'%':'—';
+    // Vendedor
+    const vendor=s.userName&&s.userName!=='—'?s.userName:(isSheet?'<span class="bdg bdg-low" style="font-size:.6rem">Sheets</span>':'—');
     return `<tr>
-      <td class="td-m">#${data.length-i}</td>
+      <td class="td-m" style="color:var(--sage)">${data.length-i}</td>
       <td class="td-m">${s.date||'—'}</td>
-      <td class="td-s" style="max-width:240px">${s.lines?s.lines.map(l=>l.itemName).join(', '):(s.desc||'—')}</td>
-      <td>${s.userName||'—'}${cli}</td>
-      <td class="td-m"><strong style="color:var(--forest)">${fmt(s.total)}</strong></td>
-      <td>${s.payMethod||'—'}</td>
-      <td class="ts tc" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.note||'—'}</td>
-      <td><span class="bdg ${isSheet?'bdg-low':'bdg-ok'}" style="font-size:.6rem">${isSheet?'📊 Sheets':'✍ Manual'}</span></td>
+      <td style="font-size:.82rem">${vendor}</td>
+      <td class="td-s" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${desc}</td>
+      <td class="td-m" style="text-align:right"><strong style="color:var(--forest)">${fmt(s.total)}</strong></td>
+      <td style="font-size:.82rem">${s.payMethod||'—'}</td>
+      <td class="td-m" style="text-align:center">${disc}</td>
+      <td style="font-size:.8rem">${cli}</td>
+      <td class="ts tc" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.note||'—'}</td>
     </tr>`;
   }).join('');
 }
@@ -1396,24 +1411,48 @@ function parseSheetCSV(csvText, tabInfo){
     return result;
   }
 
-  const hdr=parseLine(lines[0]).map(h=>h.toLowerCase().replace(/["""´`]/g,'').trim());
+  const hdr=parseLine(lines[0]).map(h=>h.toLowerCase().replace(/["""´`#]/g,'').trim());
   const colIdx=k=>hdr.findIndex(h=>h.includes(k));
-  const iVenta=colIdx('venta'); const iFecha=colIdx('fecha');
-  const iValor=colIdx('valor'); const iMedio=colIdx('medio');
-  const iComis=colIdx('comis'); const iComent=colIdx('coment');
 
-  // If no recognized headers, skip
-  if(iVenta<0&&iValor<0) return [];
+  // New format: # | Fecha | Vendedor | Descripción | Valor | Medio de pago | Descuento | Cliente | Notas
+  // Also supports old format: Venta | Fecha | Valor | Medio | Comision | Comentario
+  const iDesc   = colIdx('descripci')||colIdx('venta');   // Descripción or Venta
+  const iFecha  = colIdx('fecha');
+  const iVendor = colIdx('vendedor');
+  const iValor  = colIdx('valor');
+  const iMedio  = colIdx('medio');
+  const iDesc2  = hdr.findIndex(h=>h.includes('descripci')); // explicit fallback
+  const iDescFinal = iDesc2>=0 ? iDesc2 : hdr.findIndex(h=>h.includes('venta'));
+  const iDisc   = colIdx('descuento');
+  const iCliente= colIdx('cliente');
+  const iNotas  = colIdx('notas')||colIdx('coment');
+
+  if(iDescFinal<0&&iValor<0) return [];
 
   const sales=[];
   for(let i=1;i<lines.length;i++){
     const c=parseLine(lines[i]);
     if(c.every(x=>!x)) continue;
     const get=idx=>(idx>=0&&c[idx])?c[idx].replace(/^"|"$/g,'').trim():'';
-    const rawValor=get(iValor).replace(/\./g,'').replace(',','.');
-    const valor=parseFloat(rawValor.replace(/[^\d.]/g,''));
+
+    // Skip row if it looks like a header repeat or total row
+    const firstCell=get(0).toLowerCase();
+    if(firstCell==='#'||firstCell==='total'||firstCell==='venta'||firstCell==='descripci\u00f3n') continue;
+
+    const rawValor=get(iValor);
+    const pn=s=>{
+      if(!s) return 0;
+      s=s.replace(/[$ ]/g,'');
+      const hasDot=s.includes('.');const hasComma=s.includes(',');
+      if(hasDot&&hasComma) return parseFloat(s.replace(/\./g,'').replace(',','.'))||0;
+      if(hasComma&&!hasDot) return parseFloat(s.replace(',','.'))||0;
+      return parseFloat(s)||0;
+    };
+    const valor=pn(rawValor);
     if(isNaN(valor)||valor<=0) continue;
-    const desc=get(iVenta)||'(sin descripción)';
+
+    const desc=get(iDescFinal)||'(sin descripción)';
+    const clienteRaw=get(iCliente);
     sales.push({
       id:`sh_${tabInfo.name.replace(/\s/g,'')}_${i}`,
       source:'sheets',
@@ -1422,11 +1461,14 @@ function parseSheetCSV(csvText, tabInfo){
       desc,
       total:valor,
       payMethod:normalizePayMethod(get(iMedio)),
-      commission:parseFloat(get(iComis))||0,
-      note:get(iComent),
+      discount:parseFloat(get(iDisc))||0,
+      note:get(iNotas),
+      clienteNombre:clienteRaw||null,
+      cliente:clienteRaw?{nombre:clienteRaw,tel:null,dni:null}:null,
+      userName:get(iVendor)||'—',
+      userId:'',
       lines:[{itemId:'',itemName:desc,qty:1,price:valor}],
-      subtotal:valor,discount:0,status:'Pagado',
-      userName:'—',userId:''
+      subtotal:valor,status:'Pagado'
     });
   }
   return sales;
