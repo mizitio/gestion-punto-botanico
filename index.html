@@ -230,9 +230,9 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
 
   <div class="login-box">
     <div style="margin-bottom:22px">
-      <svg viewBox="0 0 180 52" xmlns="http://www.w3.org/2000/svg" style="width:150px;display:inline-block">
-        <text x="0" y="36" font-family="Georgia,'Times New Roman',serif" font-size="38" font-weight="400" fill="#134B42" letter-spacing="-1">.botánico</text>
-        <text x="2" y="50" font-family="'Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="300" fill="#80917D" letter-spacing="1.5">plantas y decoración</text>
+      <svg viewBox="0 0 200 62" xmlns="http://www.w3.org/2000/svg" style="width:170px;display:inline-block">
+        <text x="100" y="36" font-family="Georgia,'Times New Roman',serif" font-size="38" font-weight="400" fill="#134B42" letter-spacing="-1" text-anchor="middle">.botánico</text>
+        <text x="100" y="54" font-family="'Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="300" fill="#80917D" letter-spacing="2" text-anchor="middle">plantas y decoración</text>
       </svg>
     </div>
     <div class="login-title">Gestión interna</div>
@@ -254,9 +254,9 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
 <div id="appRoot" style="display:none;width:100%;min-height:100vh">
 <nav class="sidebar">
   <div class="brand" style="padding:22px 22px 18px">
-    <svg viewBox="0 0 180 52" xmlns="http://www.w3.org/2000/svg" style="width:160px;display:block">
-      <text x="0" y="36" font-family="Georgia, 'Times New Roman', serif" font-size="38" font-weight="400" fill="#FAFAF7" letter-spacing="-1">.botánico</text>
-      <text x="2" y="50" font-family="'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="300" fill="#AEBA8A" letter-spacing="1.5">plantas y decoración</text>
+    <svg viewBox="0 0 200 62" xmlns="http://www.w3.org/2000/svg" style="width:170px;display:block">
+      <text x="100" y="36" font-family="Georgia, 'Times New Roman', serif" font-size="38" font-weight="400" fill="#FAFAF7" letter-spacing="-1" text-anchor="middle">.botánico</text>
+      <text x="100" y="54" font-family="'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="300" fill="#AEBA8A" letter-spacing="2" text-anchor="middle">plantas y decoración</text>
     </svg>
   </div>
   <div class="nav-group">
@@ -272,6 +272,10 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
     <div class="nav-item" data-pg="metricas">
       <svg class="nav-ic" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       Métricas
+    </div>
+    <div class="nav-item" data-pg="gastos">
+      <svg class="nav-ic" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      Gastos
     </div>
   </div>
   <div class="nav-group">
@@ -418,24 +422,15 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
     <!-- MÉTRICAS -->
     <div id="pg-metricas" class="page">
 
-      <!-- GRÁFICO ARRIBA -->
       <div class="card mb20">
         <div class="card-hd" style="flex-wrap:wrap;gap:12px">
           <span class="card-ttl">Ventas vs. Gastos — punto de equilibrio</span>
-          <div class="flex g8" style="flex-wrap:wrap;align-items:center">
+          <div class="flex g8" style="align-items:center">
             <select class="finp" style="width:110px" id="chartYear" onchange="renderChart()"></select>
-            <button class="btn btn-g btn-sm" id="syncGastosBtn" onclick="syncGastos()">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
-              Sincronizar Gastos
-            </button>
           </div>
         </div>
-        <div id="syncGastosStatus" style="display:none;padding:10px 24px;background:rgba(174,186,138,.15);border-bottom:1px solid var(--mist);font-size:.8rem;color:var(--forest);align-items:center;gap:10px">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite;flex-shrink:0"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>
-          <span id="syncGastosMsg">Sincronizando gastos…</span>
-        </div>
 
-        <!-- KPIs rápidos del mes -->
+        <!-- KPIs del mes -->
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--mist);border-top:1px solid var(--mist)">
           <div style="background:var(--paper);padding:16px 20px">
             <div style="font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--sage);margin-bottom:6px">Ventas del mes</div>
@@ -450,7 +445,7 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
             <div id="kpiResultadoMes" style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600">$0</div>
           </div>
           <div style="background:var(--paper);padding:16px 20px">
-            <div style="font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--sage);margin-bottom:6px">Punto equilibrio</div>
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--sage);margin-bottom:6px">Punto de equilibrio</div>
             <div id="kpiEquilibrio" style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--forest);font-weight:600;margin-top:4px">—</div>
           </div>
         </div>
@@ -459,31 +454,84 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
           <canvas id="rentChart" height="110"></canvas>
         </div>
         <div class="t-scroll" style="border-top:1px solid var(--mist)"><table>
-          <thead><tr><th>Mes</th><th>Ventas</th><th>Gs. Fijos</th><th>Gs. Variables</th><th>Gs. Iniciales</th><th>Total egresos</th><th>Resultado</th></tr></thead>
-          <tbody id="tResumen"><tr><td class="td-empty" colspan="7">Sincronizá ventas y gastos para ver el resumen</td></tr></tbody>
+          <thead><tr><th>Mes</th><th>Ventas</th><th>Gs. Fijos</th><th>Gs. Variables</th><th>Total egresos</th><th>Resultado</th></tr></thead>
+          <tbody id="tResumen"><tr><td class="td-empty" colspan="6">Sincronizá ventas y gastos para ver el resumen</td></tr></tbody>
         </table></div>
+      </div>
+
+    </div>
+
+    <!-- GASTOS -->
+    <div id="pg-gastos" class="page">
+
+      <!-- SYNC CARD -->
+      <div class="card mb20">
+        <div class="card-hd">
+          <span class="card-ttl">Sincronización con Google Sheets</span>
+          <button class="btn btn-amber btn-sm" id="syncGastosBtn" onclick="syncGastos()" style="gap:8px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+            Sincronizar todos los gastos
+          </button>
+        </div>
+        <div id="syncGastosStatus" style="display:none;padding:10px 24px;background:rgba(174,186,138,.15);border-bottom:1px solid var(--mist);font-size:.8rem;color:var(--forest);align-items:center;gap:10px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite;flex-shrink:0"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>
+          <span id="syncGastosMsg">Sincronizando gastos…</span>
+        </div>
+        <div class="card-bd" style="padding-top:10px">
+          <!-- Sheet sources -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
+            <div style="background:var(--cream);border:1px solid var(--mist);border-radius:var(--r-md);padding:14px">
+              <div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage);margin-bottom:4px">Gastos iniciales</div>
+              <div style="font-size:.78rem;color:var(--mid)">Alquiler, servicios, habilitaciones…</div>
+              <div style="font-size:.7rem;color:var(--mint);margin-top:4px">→ Gastos fijos</div>
+            </div>
+            <div style="background:var(--cream);border:1px solid var(--mist);border-radius:var(--r-md);padding:14px">
+              <div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage);margin-bottom:4px">Gastos fijos mensuales</div>
+              <div style="font-size:.78rem;color:var(--mid)">Costos recurrentes del mes</div>
+              <div style="font-size:.7rem;color:var(--mint);margin-top:4px">→ Gastos fijos</div>
+            </div>
+            <div style="background:var(--cream);border:1px solid var(--mist);border-radius:var(--r-md);padding:14px">
+              <div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage);margin-bottom:4px">Compras decoración</div>
+              <div style="font-size:.78rem;color:var(--mid)">Compras de mercadería deco</div>
+              <div style="font-size:.7rem;color:var(--amber);margin-top:4px">→ Gastos variables</div>
+            </div>
+            <div style="background:var(--cream);border:1px solid var(--mist);border-radius:var(--r-md);padding:14px">
+              <div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage);margin-bottom:4px">Compras plantas y macetas</div>
+              <div style="font-size:.78rem;color:var(--mid)">Plantas, macetas, insumos</div>
+              <div style="font-size:.7rem;color:var(--amber);margin-top:4px">→ Gastos variables</div>
+            </div>
+            <div style="background:var(--cream);border:1px solid var(--mist);border-radius:var(--r-md);padding:14px">
+              <div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage);margin-bottom:4px">Compras paisajismo</div>
+              <div style="font-size:.78rem;color:var(--mid)">Plantas y macetas para obras</div>
+              <div style="font-size:.7rem;color:var(--amber);margin-top:4px">→ Gastos variables</div>
+            </div>
+          </div>
+          <div style="margin-top:14px;padding:10px 14px;background:rgba(174,186,138,.1);border-radius:var(--r-sm);font-size:.78rem;color:var(--sage)">
+            💡 Los gastos de Sheets se sincronizan en lectura. Para escribir desde acá a Sheets, configurá el Apps Script.
+          </div>
+        </div>
       </div>
 
       <!-- GASTOS FIJOS -->
       <div class="card mb20">
         <div class="card-hd">
-          <span class="card-ttl">Gastos fijos mensuales</span>
+          <span class="card-ttl">Gastos fijos</span>
           <button class="btn btn-p btn-sm" onclick="openOv('ovGastoFijo')">+ Agregar manual</button>
         </div>
         <div class="t-scroll"><table>
-          <thead><tr><th>Concepto</th><th>Proveedor</th><th>Monto/mes</th><th>Categoría</th><th>Origen</th><th></th></tr></thead>
-          <tbody id="tGF"><tr><td class="td-empty" colspan="6">Sin gastos fijos. Sincronizá desde Google Sheets.</td></tr></tbody>
+          <thead><tr><th>Concepto</th><th>Proveedor</th><th>Monto</th><th>Categoría</th><th>Origen</th><th></th></tr></thead>
+          <tbody id="tGF"><tr><td class="td-empty" colspan="6">Presioná "Sincronizar todos los gastos" para cargar desde Sheets.</td></tr></tbody>
         </table></div>
         <div style="padding:12px 24px;border-top:1px solid var(--mist);display:flex;justify-content:space-between;align-items:center">
-          <span class="ts tc">Total gastos fijos / mes</span>
+          <span class="ts tc">Total gastos fijos</span>
           <strong id="totalGF" style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--forest)">$0</strong>
         </div>
       </div>
 
-      <!-- GASTOS VARIABLES / COMPRAS -->
+      <!-- GASTOS VARIABLES -->
       <div class="card mb20">
         <div class="card-hd">
-          <span class="card-ttl">Gastos variables y compras</span>
+          <span class="card-ttl">Compras y gastos variables</span>
           <div class="flex g8">
             <input type="month" class="finp" style="width:160px" id="gvMes" onchange="renderGV()">
             <button class="btn btn-p btn-sm" onclick="openOv('ovGastoVar')">+ Agregar manual</button>
@@ -491,10 +539,10 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
         </div>
         <div class="t-scroll"><table>
           <thead><tr><th>Concepto</th><th>Proveedor</th><th>Monto</th><th>Categoría</th><th>Origen</th><th></th></tr></thead>
-          <tbody id="tGV"><tr><td class="td-empty" colspan="6">Sin gastos variables. Sincronizá desde Google Sheets.</td></tr></tbody>
+          <tbody id="tGV"><tr><td class="td-empty" colspan="6">Presioná "Sincronizar todos los gastos" para cargar desde Sheets.</td></tr></tbody>
         </table></div>
         <div style="padding:12px 24px;border-top:1px solid var(--mist);display:flex;justify-content:space-between;align-items:center">
-          <span class="ts tc">Total</span>
+          <span class="ts tc">Total compras / variables</span>
           <strong id="totalGV" style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--terra)">$0</strong>
         </div>
       </div>
@@ -710,7 +758,7 @@ function toast(m,t=''){
 /* ════════════════════════════════════
    NAVIGATION
 ════════════════════════════════════ */
-const PG_TITLE={dashboard:'Dashboard',ventas:'Ventas',metricas:'Métricas & Rentabilidad',stock:'Inventario / Stock',proveedores:'Proveedores',usuarios:'Usuarios'};
+const PG_TITLE={dashboard:'Dashboard',ventas:'Ventas',metricas:'Métricas & Rentabilidad',gastos:'Gastos',stock:'Inventario / Stock',proveedores:'Proveedores',usuarios:'Usuarios'};
 function goPage(name){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -1898,12 +1946,18 @@ window.goPage=function(name){
   _origGoPage(name);
   if(name==='metricas'){
     if(!_metricasInited){
-      const el1=$('gvMes'), el2=$('gvFecha'), el3=$('gvFecha');
+      const el1=$('gvMes'), el2=$('gvFecha');
       if(el1) el1.value=new Date().toISOString().slice(0,7);
       if(el2) el2.value=new Date().toISOString().slice(0,10);
       _metricasInited=true;
     }
-    renderGF();renderGV();renderChart();
+    renderChart();
+  }
+  if(name==='gastos'){
+    const el1=$('gvMes'), el2=$('gvFecha');
+    if(el1&&!el1.value) el1.value=new Date().toISOString().slice(0,7);
+    if(el2&&!el2.value) el2.value=new Date().toISOString().slice(0,10);
+    renderGF();renderGV();
   }
 };
 /* ════════════════════════════════════
