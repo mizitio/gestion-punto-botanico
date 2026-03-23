@@ -204,6 +204,12 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
 .login-err{color:var(--rust);font-size:.76rem;margin-top:10px;min-height:16px;font-weight:600}
 .login-leaf{position:absolute;opacity:.08;pointer-events:none}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.gasto-tab{padding:7px 16px;border:1.5px solid var(--mist);border-radius:var(--r-md);font-family:'Syne',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;background:white;color:var(--sage);transition:var(--t);margin-bottom:14px}
+.gasto-tab:hover{border-color:var(--sage);color:var(--forest)}
+.gasto-tab.active{background:var(--forest);border-color:var(--forest);color:white}
+.editable-cell{cursor:pointer;border-radius:4px;padding:2px 6px;transition:background .15s;display:inline-block;min-width:40px}
+.editable-cell:hover{background:rgba(174,186,138,.25)}
+
 /* ─ ITEM SEARCH AUTOCOMPLETE ─ */
 .item-sw{position:relative;flex:1;min-width:0}
 .item-si{width:100%;padding:9px 13px;border:1.5px solid var(--mist);border-radius:var(--r-sm);font-family:'Syne',sans-serif;font-size:.83rem;background:var(--cream);color:var(--ink);outline:none;transition:var(--t);cursor:text}
@@ -464,86 +470,54 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
     <!-- GASTOS -->
     <div id="pg-gastos" class="page">
 
-      <!-- SYNC CARD -->
+      <!-- HEADER CARD -->
       <div class="card mb20">
-        <div class="card-hd">
-          <span class="card-ttl">Sincronización con Google Sheets</span>
-          <button class="btn btn-amber btn-sm" id="syncGastosBtn" onclick="syncGastos()" style="gap:8px">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
-            Sincronizar todos los gastos
-          </button>
+        <div class="card-hd" style="flex-wrap:wrap;gap:10px">
+          <span class="card-ttl">Gastos — Google Sheets</span>
+          <div class="flex g8" style="flex-wrap:wrap;align-items:center">
+            <div id="gastosSyncInfo" style="font-size:.75rem;color:var(--sage);display:none">
+              Última sync: <span id="lastSyncTime">—</span>
+            </div>
+            <button class="btn btn-amber btn-sm" id="syncGastosBtn" onclick="syncGastos()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+              Sincronizar
+            </button>
+          </div>
         </div>
         <div id="syncGastosStatus" style="display:none;padding:10px 24px;background:rgba(174,186,138,.15);border-bottom:1px solid var(--mist);font-size:.8rem;color:var(--forest);align-items:center;gap:10px">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite;flex-shrink:0"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>
           <span id="syncGastosMsg">Sincronizando gastos…</span>
         </div>
-        <div class="card-bd" style="padding-top:10px">
-          <!-- Sheet sources -->
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
-            <div style="background:var(--cream);border:1px solid var(--mist);border-radius:var(--r-md);padding:14px">
-              <div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage);margin-bottom:4px">Gastos iniciales</div>
-              <div style="font-size:.78rem;color:var(--mid)">Alquiler, servicios, habilitaciones…</div>
-              <div style="font-size:.7rem;color:var(--mint);margin-top:4px">→ Gastos fijos</div>
-            </div>
-            <div style="background:var(--cream);border:1px solid var(--mist);border-radius:var(--r-md);padding:14px">
-              <div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage);margin-bottom:4px">Gastos fijos mensuales</div>
-              <div style="font-size:.78rem;color:var(--mid)">Costos recurrentes del mes</div>
-              <div style="font-size:.7rem;color:var(--mint);margin-top:4px">→ Gastos fijos</div>
-            </div>
-            <div style="background:var(--cream);border:1px solid var(--mist);border-radius:var(--r-md);padding:14px">
-              <div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage);margin-bottom:4px">Compras decoración</div>
-              <div style="font-size:.78rem;color:var(--mid)">Compras de mercadería deco</div>
-              <div style="font-size:.7rem;color:var(--amber);margin-top:4px">→ Gastos variables</div>
-            </div>
-            <div style="background:var(--cream);border:1px solid var(--mist);border-radius:var(--r-md);padding:14px">
-              <div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage);margin-bottom:4px">Compras plantas y macetas</div>
-              <div style="font-size:.78rem;color:var(--mid)">Plantas, macetas, insumos</div>
-              <div style="font-size:.7rem;color:var(--amber);margin-top:4px">→ Gastos variables</div>
-            </div>
-            <div style="background:var(--cream);border:1px solid var(--mist);border-radius:var(--r-md);padding:14px">
-              <div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage);margin-bottom:4px">Compras paisajismo</div>
-              <div style="font-size:.78rem;color:var(--mid)">Plantas y macetas para obras</div>
-              <div style="font-size:.7rem;color:var(--amber);margin-top:4px">→ Gastos variables</div>
-            </div>
-          </div>
-          <div style="margin-top:14px;padding:10px 14px;background:rgba(174,186,138,.1);border-radius:var(--r-sm);font-size:.78rem;color:var(--sage)">
-            💡 Los gastos de Sheets se sincronizan en lectura. Para escribir desde acá a Sheets, configurá el Apps Script.
-          </div>
+
+        <!-- Pestañas del sheet -->
+        <div style="display:flex;gap:6px;padding:14px 20px 0;flex-wrap:wrap">
+          <button class="gasto-tab active" data-tab="fijos" onclick="switchGastoTab(this,'fijos')">Gastos iniciales / fijos</button>
+          <button class="gasto-tab" data-tab="deco" onclick="switchGastoTab(this,'deco')">Compras decoración</button>
+          <button class="gasto-tab" data-tab="plantas" onclick="switchGastoTab(this,'plantas')">Compras plantas y macetas</button>
+          <button class="gasto-tab" data-tab="paisajismo" onclick="switchGastoTab(this,'paisajismo')">Compras paisajismo</button>
+          <button class="gasto-tab" data-tab="fijosmes" onclick="switchGastoTab(this,'fijosmes')">Gastos fijos mensuales</button>
         </div>
       </div>
 
-      <!-- GASTOS FIJOS -->
+      <!-- TABLE CARD -->
       <div class="card mb20">
         <div class="card-hd">
-          <span class="card-ttl">Gastos fijos</span>
-          <button class="btn btn-p btn-sm" onclick="openOv('ovGastoFijo')">+ Agregar manual</button>
+          <span class="card-ttl" id="gastoTabTitle">Gastos iniciales / fijos</span>
+          <button class="btn btn-p btn-sm" onclick="openAddGastoModal()">+ Agregar fila</button>
         </div>
-        <div class="t-scroll"><table>
-          <thead><tr><th>Concepto</th><th>Proveedor</th><th>Monto</th><th>Categoría</th><th>Origen</th><th></th></tr></thead>
-          <tbody id="tGF"><tr><td class="td-empty" colspan="6">Presioná "Sincronizar todos los gastos" para cargar desde Sheets.</td></tr></tbody>
-        </table></div>
+        <div id="gastosWriteStatus" style="display:none;padding:8px 20px;background:rgba(238,168,59,.1);font-size:.78rem;color:#7a5500;align-items:center;gap:8px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite;flex-shrink:0"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>
+          <span id="gastosWriteMsg">Guardando…</span>
+        </div>
+        <div class="t-scroll">
+          <table id="gastosTable">
+            <thead id="gastosThead"></thead>
+            <tbody id="gastosTbody"><tr><td class="td-empty" colspan="4">Presioná "Sincronizar" para cargar los gastos desde Google Sheets.</td></tr></tbody>
+          </table>
+        </div>
         <div style="padding:12px 24px;border-top:1px solid var(--mist);display:flex;justify-content:space-between;align-items:center">
-          <span class="ts tc">Total gastos fijos</span>
-          <strong id="totalGF" style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--forest)">$0</strong>
-        </div>
-      </div>
-
-      <!-- GASTOS VARIABLES -->
-      <div class="card mb20">
-        <div class="card-hd">
-          <span class="card-ttl">Compras y gastos variables</span>
-          <div class="flex g8">
-            <input type="month" class="finp" style="width:160px" id="gvMes" onchange="renderGV()">
-            <button class="btn btn-p btn-sm" onclick="openOv('ovGastoVar')">+ Agregar manual</button>
-          </div>
-        </div>
-        <div class="t-scroll"><table>
-          <thead><tr><th>Concepto</th><th>Proveedor</th><th>Monto</th><th>Categoría</th><th>Origen</th><th></th></tr></thead>
-          <tbody id="tGV"><tr><td class="td-empty" colspan="6">Presioná "Sincronizar todos los gastos" para cargar desde Sheets.</td></tr></tbody>
-        </table></div>
-        <div style="padding:12px 24px;border-top:1px solid var(--mist);display:flex;justify-content:space-between;align-items:center">
-          <span class="ts tc">Total compras / variables</span>
-          <strong id="totalGV" style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--terra)">$0</strong>
+          <span class="ts tc" id="gastoTotalLabel">Total</span>
+          <strong id="gastoTabTotal" style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--forest)">$0</strong>
         </div>
       </div>
 
@@ -689,47 +663,48 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
 
 
 <!-- MODAL: GASTO FIJO -->
-<div class="ov" id="ovGastoFijo">
+<!-- MODAL: AGREGAR GASTO (unified, writes to Sheets) -->
+<div class="ov" id="ovAddGasto">
   <div class="modal modal-sm">
-    <div class="mhd"><span class="mttl" id="gfMttl">Nuevo gasto fijo</span><button class="mx" onclick="closeOv('ovGastoFijo')">✕</button></div>
+    <div class="mhd"><span class="mttl" id="addGastoTitle">Agregar gasto</span><button class="mx" onclick="closeOv('ovAddGasto')">✕</button></div>
     <div class="mbd">
+      <div style="font-size:.75rem;color:var(--sage);margin-bottom:14px">
+        Se agregará en: <strong id="addGastoSheet" style="color:var(--forest)">—</strong>
+      </div>
       <div class="fr fr2">
-        <div class="fc" style="grid-column:1/-1"><label class="flbl">Concepto *</label><input type="text" class="finp" id="gfCon" placeholder="Ej: Alquiler, Sueldo, Seguro…"></div>
-        <div class="fc"><label class="flbl">Monto mensual *</label><input type="number" class="finp" id="gfMonto" placeholder="0.00"></div>
-        <div class="fc"><label class="flbl">Categoría</label>
-          <select class="finp" id="gfCat">
-            <option>Alquiler</option><option>Personal</option><option>Servicios</option>
-            <option>Marketing</option><option>Logística</option><option>Impuestos</option><option>Otro</option>
-          </select>
+        <div class="fc">
+          <label class="flbl">Fecha</label>
+          <input type="date" class="finp" id="agFecha">
         </div>
-        <div class="fc" style="grid-column:1/-1"><label class="flbl">Notas</label><input type="text" class="finp" id="gfNot" placeholder="Opcional…"></div>
+        <div class="fc">
+          <label class="flbl">Valor ($) *</label>
+          <input type="number" class="finp" id="agValor" placeholder="0">
+        </div>
+        <div class="fc" style="grid-column:1/-1">
+          <label class="flbl">Concepto *</label>
+          <input type="text" class="finp" id="agCon" placeholder="Ej: Alquiler, Macetas, Plantas…">
+        </div>
+        <div class="fc" style="grid-column:1/-1">
+          <label class="flbl">Proveedor</label>
+          <input type="text" class="finp" id="agProv" placeholder="Nombre del proveedor">
+        </div>
+        <div class="fc" style="grid-column:1/-1">
+          <label class="flbl">Notas (opcional)</label>
+          <input type="text" class="finp" id="agNota" placeholder="Observaciones…">
+        </div>
       </div>
     </div>
-    <div class="mft"><button class="btn btn-g" onclick="closeOv('ovGastoFijo')">Cancelar</button><button class="btn btn-p" onclick="saveGF()">Guardar</button></div>
+    <div class="mft">
+      <button class="btn btn-g" onclick="closeOv('ovAddGasto')">Cancelar</button>
+      <button class="btn btn-p" onclick="submitAddGasto()">Guardar en Sheets</button>
+    </div>
   </div>
 </div>
 
-<!-- MODAL: GASTO VARIABLE -->
-<div class="ov" id="ovGastoVar">
-  <div class="modal modal-sm">
-    <div class="mhd"><span class="mttl">Registrar gasto variable</span><button class="mx" onclick="closeOv('ovGastoVar')">✕</button></div>
-    <div class="mbd">
-      <div class="fr fr2">
-        <div class="fc"><label class="flbl">Fecha *</label><input type="date" class="finp" id="gvFecha"></div>
-        <div class="fc"><label class="flbl">Categoría</label>
-          <select class="finp" id="gvCat">
-            <option>Compra mercadería</option><option>Embalaje</option><option>Transporte</option>
-            <option>Marketing puntual</option><option>Reparación</option><option>Otro</option>
-          </select>
-        </div>
-        <div class="fc" style="grid-column:1/-1"><label class="flbl">Concepto *</label><input type="text" class="finp" id="gvCon" placeholder="Descripción del gasto"></div>
-        <div class="fc"><label class="flbl">Monto *</label><input type="number" class="finp" id="gvMonto" placeholder="0.00"></div>
-        <div class="fc"><label class="flbl">Notas</label><input type="text" class="finp" id="gvNot" placeholder="Opcional…"></div>
-      </div>
-    </div>
-    <div class="mft"><button class="btn btn-g" onclick="closeOv('ovGastoVar')">Cancelar</button><button class="btn btn-p" onclick="saveGV()">Guardar</button></div>
-  </div>
-</div>
+<!-- keep old modals as fallback for manual entries -->
+<div class="ov" id="ovGastoFijo" style="display:none"><div class="modal modal-sm"><div class="mhd"><span class="mttl">Gasto fijo</span><button class="mx" onclick="closeOv('ovGastoFijo')">✕</button></div><div class="mbd"><div class="fr fr2"><div class="fc" style="grid-column:1/-1"><label class="flbl">Concepto *</label><input type="text" class="finp" id="gfCon" placeholder="Concepto…"></div><div class="fc"><label class="flbl">Monto *</label><input type="number" class="finp" id="gfMonto" placeholder="0.00"></div><div class="fc"><label class="flbl">Categoría</label><select class="finp" id="gfCat"><option>Alquiler</option><option>Personal</option><option>Servicios</option><option>Marketing</option><option>Logística</option><option>Impuestos</option><option>Otro</option></select></div><div class="fc" style="grid-column:1/-1"><label class="flbl">Notas</label><input type="text" class="finp" id="gfNot" placeholder="Opcional…"></div></div></div><div class="mft"><button class="btn btn-g" onclick="closeOv('ovGastoFijo')">Cancelar</button><button class="btn btn-p" onclick="saveGF()">Guardar</button></div></div></div>
+<div class="ov" id="ovGastoVar" style="display:none"><div class="modal modal-sm"><div class="mhd"><span class="mttl">Gasto variable</span><button class="mx" onclick="closeOv('ovGastoVar')">✕</button></div><div class="mbd"><div class="fr fr2"><div class="fc"><label class="flbl">Fecha *</label><input type="date" class="finp" id="gvFecha"></div><div class="fc"><label class="flbl">Categoría</label><select class="finp" id="gvCat"><option>Compra mercadería</option><option>Embalaje</option><option>Transporte</option><option>Marketing puntual</option><option>Reparación</option><option>Otro</option></select></div><div class="fc" style="grid-column:1/-1"><label class="flbl">Concepto *</label><input type="text" class="finp" id="gvCon" placeholder="Descripción…"></div><div class="fc"><label class="flbl">Monto *</label><input type="number" class="finp" id="gvMonto" placeholder="0.00"></div><div class="fc"><label class="flbl">Notas</label><input type="text" class="finp" id="gvNot" placeholder="Opcional…"></div></div></div><div class="mft"><button class="btn btn-g" onclick="closeOv('ovGastoVar')">Cancelar</button><button class="btn btn-p" onclick="saveGV()">Guardar</button></div></div></div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1745,6 +1720,7 @@ function parseGastosCSV(csvText,sheetName){
   const col=(...ks)=>{for(const k of ks){const i=hdr.findIndex(h=>h.includes(k));if(i>=0)return i;}return -1;};
   const iProv=col('proveedor','prov');
   const iVal=col('valor','monto','precio','total');
+  const iFecha=col('fecha','date','cuando');
 
   // Smart Argentine number parser
   // "5.670.000,00" → 5670000   "248.851,18" → 248851.18   "248851" → 248851
@@ -1780,6 +1756,7 @@ function parseGastosCSV(csvText,sheetName){
       concepto:con,
       proveedor:iProv>=0?(c[iProv]||'').replace(/^"|"$/g,'').trim():'',
       monto:val,
+      fecha:iFecha>=0?(c[iFecha]||'').replace(/^"|"$/g,'').trim():'',
       cat:sheetName,
       notas:''
     });
@@ -1984,8 +1961,218 @@ window.goPage=function(name){
   }
 };
 /* ════════════════════════════════════
-   GOOGLE SHEETS — STOCK SYNC
-   Sheet: 1uCX-vbGnMexpbHfHfxil0B83RsxqBivq3t-mBzkhwis
+   GASTOS TAB — FULL READ/WRITE
+   Apps Script URL for write-back
+════════════════════════════════════ */
+const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbx-41f8VC0osKGPJuhaczg5tLN-bqQRpJt-mzC0VBThrvlwus8nfS18yyAsGAJGM30r/exec';
+
+// Tab config: key → { sheetName, title, tipo }
+const GASTO_TABS={
+  fijos:      {sheetName:'Gastos iniciales',          title:'Gastos iniciales / fijos',    tipo:'fijo',     hasFecha:true,  hasConcepto:true},
+  fijosmes:   {sheetName:'Gastos fijos mensuales',    title:'Gastos fijos mensuales',       tipo:'fijo',     hasFecha:true,  hasConcepto:true},
+  deco:       {sheetName:'Compras decoracion',        title:'Compras decoración',           tipo:'variable', hasFecha:true,  hasConcepto:true},
+  plantas:    {sheetName:'Compras plantas y macetas', title:'Compras plantas y macetas',    tipo:'variable', hasFecha:true,  hasConcepto:true},
+  paisajismo: {sheetName:'Compras paisajismo',        title:'Compras paisajismo',           tipo:'variable', hasFecha:true,  hasConcepto:true},
+};
+
+// In-memory store per tab
+const _gastosData={fijos:[],fijosmes:[],deco:[],plantas:[],paisajismo:[]};
+let _curGastoTab='fijos';
+
+function switchGastoTab(el, tab){
+  document.querySelectorAll('.gasto-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  _curGastoTab=tab;
+  const cfg=GASTO_TABS[tab];
+  $('gastoTabTitle').textContent=cfg.title;
+  renderGastosTable(tab);
+}
+
+function openAddGastoModal(){
+  const cfg=GASTO_TABS[_curGastoTab];
+  $('addGastoTitle').textContent='Agregar a: '+cfg.title;
+  $('addGastoSheet').textContent=cfg.sheetName;
+  ['agCon','agProv','agNota'].forEach(id=>$(id).value='');
+  $('agValor').value='';
+  $('agFecha').value=new Date().toISOString().slice(0,10);
+  openOv('ovAddGasto');
+}
+
+async function submitAddGasto(){
+  const con=$('agCon').value.trim();
+  const val=parseFloat($('agValor').value);
+  if(!con||!val){toast('Concepto y valor son obligatorios','err');return;}
+  const cfg=GASTO_TABS[_curGastoTab];
+  // Convert date to DD/MM/YYYY
+  const rawFecha=$('agFecha').value;
+  let fecha='';
+  if(rawFecha){const p=rawFecha.split('-');fecha=`${p[2]}/${p[1]}/${p[0]}`;}
+  showWriteStatus('Guardando en Google Sheets…');
+  try{
+    const payload={
+      action:'addGasto',
+      tipo: cfg.tipo,
+      categoria: cfg.sheetName,
+      concepto: con,
+      proveedor: $('agProv').value.trim(),
+      valor: val,
+      fecha,
+      nota: $('agNota').value.trim()
+    };
+    const resp=await fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify(payload)});
+    const json=await resp.json();
+    if(!json.ok) throw new Error(json.error||'Error desconocido');
+    _gastosData[_curGastoTab].push({
+      concepto:con, proveedor:$('agProv').value.trim(),
+      valor:val, notas:$('agNota').value.trim(), fecha
+    });
+    closeOv('ovAddGasto');
+    hideWriteStatus();
+    toast(`"${con}" agregado a ${cfg.sheetName}`);
+    renderGastosTable(_curGastoTab);
+    renderGF();renderGV();renderChart();
+  }catch(err){
+    hideWriteStatus();
+    toast('Error al guardar: '+err.message,'err');
+  }
+}
+
+function showWriteStatus(msg){
+  const el=$('gastosWriteStatus');if(el){el.style.display='flex';$('gastosWriteMsg').textContent=msg;}
+}
+function hideWriteStatus(){
+  const el=$('gastosWriteStatus');if(el)el.style.display='none';
+}
+
+function renderGastosTable(tab){
+  const data=_gastosData[tab]||[];
+  const thead=$('gastosThead');
+  const tbody=$('gastosTbody');
+  const cfg=GASTO_TABS[tab];
+  const isFijo=cfg.tipo==='fijo';
+
+  // Headers — all tabs now have: Fecha | Concepto | Proveedor | Valor | Notas
+  thead.innerHTML=`<tr>
+    <th style="width:120px">Fecha</th>
+    <th>Concepto</th>
+    <th>Proveedor</th>
+    <th style="text-align:right;width:140px">Valor ($)</th>
+    <th>Notas</th>
+  </tr>`;
+
+  if(!data.length){
+    tbody.innerHTML='<tr><td class="td-empty" colspan="5">Sin datos. Presioná "Sincronizar" para cargar desde Google Sheets.</td></tr>';
+    $('gastoTabTotal').textContent=fmt(0);
+    $('gastoTotalLabel').textContent='Total '+cfg.title;
+    return;
+  }
+
+  const ec=(i,field,val,extra='')=>
+    `<span class="editable-cell" onclick="editGastoCell(${i},'${field}',this)" title="Click para editar" ${extra}>${val||'—'}</span>`;
+
+  tbody.innerHTML=data.map((row,i)=>{
+    const fechaVal=row.fecha||'';
+    const conVal=row.concepto||'—';
+    const provVal=row.proveedor||'—';
+    const valFmt=fmt(row.valor);
+    const notaVal=row.notas||'—';
+    return `<tr>
+      <td class="td-m">${ec(i,'fecha',fechaVal)}</td>
+      <td class="td-s">${ec(i,'concepto',conVal)}</td>
+      <td>${ec(i,'proveedor',provVal)}</td>
+      <td class="td-m" style="text-align:right"><span class="editable-cell" onclick="editGastoCell(${i},'valor',this)" style="color:var(--forest);font-weight:600">${valFmt}</span></td>
+      <td class="ts tc">${ec(i,'notas',notaVal)}</td>
+    </tr>`;
+  }).join('');
+
+  const total=data.reduce((s,r)=>s+(r.valor||0),0);
+  $('gastoTabTotal').textContent=fmt(total);
+  $('gastoTotalLabel').textContent='Total '+cfg.title;
+}
+
+function editGastoCell(rowIdx, field, el){
+  const row=_gastosData[_curGastoTab][rowIdx];
+  // For valor field, show raw number not formatted
+  const cur=field==='valor'?(row.valor||0):(row[field]||'');
+  const inp=document.createElement('input');
+  inp.type=field==='valor'?'number':field==='fecha'?'date':'text';
+  // Convert fecha display to date input format if needed
+  if(field==='fecha'&&cur&&cur.includes('/')){
+    const p=cur.split('/');
+    inp.value=p.length===3?`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`:cur;
+  } else {
+    inp.value=field==='valor'?cur:(cur==='—'?'':cur);
+  }
+  inp.style.cssText='width:100%;padding:3px 6px;border:1.5px solid var(--forest);border-radius:4px;font-family:Syne,sans-serif;font-size:.82rem;background:white;outline:none;min-width:80px';
+  el.replaceWith(inp);
+  inp.focus();inp.select();
+
+  const save=async()=>{
+    let newVal;
+    if(field==='valor') newVal=parseFloat(inp.value)||0;
+    else if(field==='fecha'&&inp.value){
+      // Convert YYYY-MM-DD back to DD/MM/YYYY for display and storage
+      const p=inp.value.split('-');
+      newVal=p.length===3?`${p[2]}/${p[1]}/${p[0]}`:inp.value;
+    } else newVal=inp.value.trim();
+    row[field]=newVal;
+    showWriteStatus('Guardando en Sheets…');
+    try{
+      await fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({
+        action:'editGasto',
+        sheetName:GASTO_TABS[_curGastoTab].sheetName,
+        rowIndex:rowIdx,
+        field, value:newVal,
+        // send full row so script can locate it
+        concepto:row.concepto, proveedor:row.proveedor,
+        valor:row.valor, notas:row.notas, fecha:row.fecha
+      })});
+    }catch(e){console.warn('Write error:',e);}
+    hideWriteStatus();
+    renderGastosTable(_curGastoTab);
+    renderGF();renderGV();renderChart();
+  };
+  inp.addEventListener('blur',save);
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){e.preventDefault();inp.blur();}
+    if(e.key==='Escape'){renderGastosTable(_curGastoTab);}
+  });
+}
+
+// Override goPage for gastos: auto-sync on first open
+let _gastosLoaded=false;
+const _origGoPage2=window.goPage;
+window.goPage=function(name){
+  _origGoPage2(name);
+  if(name==='gastos'){
+    const el=$('gvMes');if(el&&!el.value)el.value=new Date().toISOString().slice(0,7);
+    if(!_gastosLoaded) syncGastos();
+  }
+};
+
+// Store data from syncGastos into _gastosData per tab
+const _origSyncGastos=syncGastos;
+syncGastos=async function(){
+  await _origSyncGastos();
+  // Map DB.gastosFijos and DB.gastosVar into tab buckets
+  _gastosData.fijos       = DB.gastosFijos.filter(g=>g.cat==='Gastos iniciales'||g.cat==='Gastos fijos mensuales'&&false).map(g=>({concepto:g.concepto,proveedor:g.proveedor||'',valor:g.monto,notas:g.notas||''}));
+  _gastosData.fijosmes    = DB.gastosFijos.filter(g=>g.cat==='Gastos fijos mensuales').map(g=>({concepto:g.concepto,proveedor:g.proveedor||'',valor:g.monto,notas:g.notas||'',fecha:g.fecha||''}));
+  _gastosData.deco        = DB.gastosVar.filter(g=>g.cat==='Compras decoracion').map(g=>({concepto:g.concepto,proveedor:g.proveedor||'',valor:g.monto,notas:g.notas||'',fecha:g.fecha||''}));
+  _gastosData.plantas     = DB.gastosVar.filter(g=>g.cat==='Compras plantas y macetas').map(g=>({concepto:g.concepto,proveedor:g.proveedor||'',valor:g.monto,notas:g.notas||'',fecha:g.fecha||''}));
+  _gastosData.paisajismo  = DB.gastosVar.filter(g=>g.cat==='Compras paisajismo').map(g=>({concepto:g.concepto,proveedor:g.proveedor||'',valor:g.monto,notas:g.notas||'',fecha:g.fecha||''}));
+  _gastosData.fijos = DB.gastosFijos.filter(g=>g.cat==='Gastos iniciales').map(g=>({concepto:g.concepto,proveedor:g.proveedor||'',valor:g.monto,notas:g.notas||'',fecha:g.fecha||''}));
+  renderGastosTable(_curGastoTab);
+  _gastosLoaded=true;
+  // Update last sync time
+  const el=$('lastSyncTime');
+  if(el){
+    el.textContent=new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+    $('gastosSyncInfo').style.display='block';
+  }
+};
+
+/* ════════════════════════════════════
+   GOOGLE SHEETS STOCK SYNC
 ════════════════════════════════════ */
 const STOCK_SHEET_ID='1uCX-vbGnMexpbHfHfxil0B83RsxqBivq3t-mBzkhwis';
 const STOCK_TABS=[
