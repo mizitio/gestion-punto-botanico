@@ -1723,18 +1723,42 @@ async function syncGastos(){
     DB.gastosFijos=DB.gastosFijos.filter(g=>g.source!=='sheets');
     DB.gastosVar=DB.gastosVar.filter(g=>g.source!=='sheets');
     let totalF=0,totalV=0;
-    // Fijos
+
+    // Gastos iniciales = la hoja principal con ALQUILER, etc. → los tratamos como fijos
+    showGastosSyncStatus('Importando gastos iniciales…');
+    try{
+      const csv=await fetchGastosSheet('Gastos iniciales');
+      const items=parseGastosCSV(csv,'Gastos iniciales');
+      DB.gastosFijos.push(...items);
+      totalF+=items.length;
+    }catch(e){console.warn('Gastos iniciales:',e.message);}
+
+    // Gastos fijos mensuales (si existe como pestaña separada)
     showGastosSyncStatus('Importando gastos fijos mensuales…');
-    try{const csv=await fetchGastosSheet('Gastos fijos mensuales');const items=parseGastosCSV(csv,'Gastos fijos mensuales');DB.gastosFijos.push(...items);totalF+=items.length;}
-    catch(e){console.warn('Fijos:',e.message);}
-    // Iniciales y compras → variables
-    const varTabs=['Gastos iniciales','Compras decoracion','Compras plantas y macetas','Compras plantas y macetas para paisajismo'];
+    try{
+      const csv=await fetchGastosSheet('Gastos fijos mensuales');
+      const items=parseGastosCSV(csv,'Gastos fijos mensuales');
+      DB.gastosFijos.push(...items);
+      totalF+=items.length;
+    }catch(e){console.warn('Gastos fijos mensuales:',e.message);}
+
+    // Compras → variables
+    const varTabs=[
+      'Compras decoracion',
+      'Compras plantas y macetas',
+      'Compras plantas y macetas para paisajismo'
+    ];
     for(const tab of varTabs){
       showGastosSyncStatus(`Importando: ${tab}…`);
-      try{const csv=await fetchGastosSheet(tab);const items=parseGastosCSV(csv,tab);DB.gastosVar.push(...items);totalV+=items.length;}
-      catch(e){console.warn(tab,e.message);}
+      try{
+        const csv=await fetchGastosSheet(tab);
+        const items=parseGastosCSV(csv,tab);
+        DB.gastosVar.push(...items);
+        totalV+=items.length;
+      }catch(e){console.warn(tab,e.message);}
     }
-    showGastosSyncStatus(`✓ ${totalF} fijos + ${totalV} variables importados`);
+
+    showGastosSyncStatus(`✓ ${totalF} gastos fijos + ${totalV} compras importados`);
     setTimeout(()=>showGastosSyncStatus('',false),5000);
     toast(`${totalF+totalV} gastos sincronizados desde Google Sheets`);
     renderGF();renderGV();renderChart();
