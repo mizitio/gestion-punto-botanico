@@ -207,8 +207,9 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
 .gasto-tab{padding:7px 16px;border:1.5px solid var(--mist);border-radius:var(--r-md);font-family:'Syne',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;background:white;color:var(--sage);transition:var(--t);margin-bottom:14px}
 .gasto-tab:hover{border-color:var(--sage);color:var(--forest)}
 .gasto-tab.active{background:var(--forest);border-color:var(--forest);color:white}
-.editable-cell{cursor:pointer;border-radius:4px;padding:2px 6px;transition:background .15s;display:inline-block;min-width:40px}
-.editable-cell:hover{background:rgba(174,186,138,.25)}
+.btn-warn{background:rgba(202,118,59,.12);border:1.5px solid var(--terra);color:var(--terra)}
+.btn-warn:hover{background:var(--terra);color:white}
+
 
 /* ─ ITEM SEARCH AUTOCOMPLETE ─ */
 .item-sw{position:relative;flex:1;min-width:0}
@@ -367,8 +368,8 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
         </div>
         <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
         <div class="t-scroll"><table>
-          <thead><tr><th>#</th><th>Fecha</th><th>Vendedor</th><th>Descripción</th><th style="text-align:right">Valor</th><th>Medio de pago</th><th>Desc.</th><th>Cliente</th><th>Notas</th></tr></thead>
-          <tbody id="salesT"><tr><td class="td-empty" colspan="9">Sin ventas. Sincronizá desde Google Sheets o registrá una venta.</td></tr></tbody>
+          <thead><tr><th>#</th><th>Fecha</th><th>Vendedor</th><th>Descripción</th><th style="text-align:right">Valor</th><th>Medio de pago</th><th>Desc.</th><th>Cliente</th><th>Notas</th><th>Origen</th><th></th></tr></thead>
+          <tbody id="salesT"><tr><td class="td-empty" colspan="11">Sin ventas. Sincronizá desde Google Sheets o registrá una venta.</td></tr></tbody>
         </table></div>
       </div>
     </div>
@@ -728,6 +729,45 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
 <!-- keep old modals as fallback for manual entries -->
 <div class="ov" id="ovGastoFijo" style="display:none"><div class="modal modal-sm"><div class="mhd"><span class="mttl">Gasto fijo</span><button class="mx" onclick="closeOv('ovGastoFijo')">✕</button></div><div class="mbd"><div class="fr fr2"><div class="fc" style="grid-column:1/-1"><label class="flbl">Concepto *</label><input type="text" class="finp" id="gfCon" placeholder="Concepto…"></div><div class="fc"><label class="flbl">Monto *</label><input type="number" class="finp" id="gfMonto" placeholder="0.00"></div><div class="fc"><label class="flbl">Categoría</label><select class="finp" id="gfCat"><option>Alquiler</option><option>Personal</option><option>Servicios</option><option>Marketing</option><option>Logística</option><option>Impuestos</option><option>Otro</option></select></div><div class="fc" style="grid-column:1/-1"><label class="flbl">Notas</label><input type="text" class="finp" id="gfNot" placeholder="Opcional…"></div></div></div><div class="mft"><button class="btn btn-g" onclick="closeOv('ovGastoFijo')">Cancelar</button><button class="btn btn-p" onclick="saveGF()">Guardar</button></div></div></div>
 <div class="ov" id="ovGastoVar" style="display:none"><div class="modal modal-sm"><div class="mhd"><span class="mttl">Gasto variable</span><button class="mx" onclick="closeOv('ovGastoVar')">✕</button></div><div class="mbd"><div class="fr fr2"><div class="fc"><label class="flbl">Fecha *</label><input type="date" class="finp" id="gvFecha"></div><div class="fc"><label class="flbl">Categoría</label><select class="finp" id="gvCat"><option>Compra mercadería</option><option>Embalaje</option><option>Transporte</option><option>Marketing puntual</option><option>Reparación</option><option>Otro</option></select></div><div class="fc" style="grid-column:1/-1"><label class="flbl">Concepto *</label><input type="text" class="finp" id="gvCon" placeholder="Descripción…"></div><div class="fc"><label class="flbl">Monto *</label><input type="number" class="finp" id="gvMonto" placeholder="0.00"></div><div class="fc"><label class="flbl">Notas</label><input type="text" class="finp" id="gvNot" placeholder="Opcional…"></div></div></div><div class="mft"><button class="btn btn-g" onclick="closeOv('ovGastoVar')">Cancelar</button><button class="btn btn-p" onclick="saveGV()">Guardar</button></div></div></div>
+
+<!-- MODAL: EDITAR VENTA -->
+<div class="ov" id="ovEditSale">
+  <div class="modal">
+    <div class="mhd"><span class="mttl">Editar venta</span><button class="mx" onclick="closeOv('ovEditSale')">✕</button></div>
+    <div class="mbd">
+      <div class="fr fr2 mb16">
+        <div class="fc"><label class="flbl">Fecha</label><input type="text" class="finp" id="esFecha" placeholder="DD/MM/YYYY"></div>
+        <div class="fc"><label class="flbl">Vendedor</label><input type="text" class="finp" id="esVendedor" placeholder="Nombre del vendedor"></div>
+      </div>
+      <div class="fc mb16">
+        <label class="flbl">Descripción</label>
+        <input type="text" class="finp" id="esDesc" placeholder="Descripción de la venta">
+      </div>
+      <div class="fr fr2 mb16">
+        <div class="fc"><label class="flbl">Valor ($)</label><input type="number" class="finp" id="esValor" placeholder="0"></div>
+        <div class="fc"><label class="flbl">Descuento (%)</label><input type="number" class="finp" id="esDisc" placeholder="0" min="0" max="100"></div>
+      </div>
+      <div class="fc mb16">
+        <label class="flbl">Medio de pago</label>
+        <input type="text" class="finp" id="esMedio" placeholder="Efectivo, Débito, Transferencia…">
+      </div>
+      <div class="fr fr2 mb16">
+        <div class="fc"><label class="flbl">Cliente</label><input type="text" class="finp" id="esCliente" placeholder="Nombre del cliente"></div>
+        <div class="fc"><label class="flbl">Teléfono</label><input type="text" class="finp" id="esTel" placeholder="+54 11…"></div>
+      </div>
+      <div class="fc mb16">
+        <label class="flbl">Notas</label>
+        <input type="text" class="finp" id="esNota" placeholder="Observaciones…">
+      </div>
+      <div id="esOrigen" style="font-size:.75rem;color:var(--sage);padding:6px 0"></div>
+    </div>
+    <div class="mft">
+      <button class="btn btn-g" onclick="closeOv('ovEditSale')">Cancelar</button>
+      <button class="btn btn-warn btn-sm" onclick="deleteEditSale()" style="margin-right:auto">🗑 Eliminar</button>
+      <button class="btn btn-p" onclick="saveEditSale()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -1297,50 +1337,144 @@ function confirmSale(){
 }
 function renderSales(rows=null){
   const data=rows||DB.sales;const tb=$('salesT');
-  if(!data.length){tb.innerHTML='<tr><td class="td-empty" colspan="9">Sin ventas. Sincronizá desde Google Sheets o registrá una nueva.</td></tr>';return;}
+  if(!data.length){tb.innerHTML='<tr><td class="td-empty" colspan="11">Sin ventas. Sincronizá desde Google Sheets o registrá una nueva.</td></tr>';return;}
   tb.innerHTML=data.map((s,i)=>{
     const isSheet=s.source==='sheets';
-    // Cliente display
     const cli=s.cliente&&s.cliente.nombre
       ?`${s.cliente.nombre}${s.cliente.tel?'<br><span style="font-size:.7rem;color:var(--sage)">'+s.cliente.tel+'</span>':''}${s.cliente.dni?'<span style="font-size:.7rem;color:var(--sage)"> · DNI '+s.cliente.dni+'</span>':''}`
       :(isSheet&&s.clienteNombre?s.clienteNombre:'—');
-    // Descripción
     const desc=s.lines?s.lines.map(l=>l.itemName).join(', '):(s.desc||'—');
-    // Descuento
     const disc=s.discount?s.discount+'%':'—';
-    // Vendedor
-    const vendor=s.userName&&s.userName!=='—'?s.userName:(isSheet?'<span class="bdg bdg-low" style="font-size:.6rem">Sheets</span>':'—');
+    const vendor=s.userName&&s.userName!=='—'?s.userName:'—';
+    const origenBadge=isSheet
+      ?`<span class="bdg bdg-low" style="font-size:.68rem;white-space:nowrap">📊 Sheets</span>`
+      :`<span class="bdg bdg-ok" style="font-size:.68rem;white-space:nowrap">✍ Manual</span>`;
     return `<tr>
       <td class="td-m" style="color:var(--sage)">${data.length-i}</td>
-      <td class="td-m">${s.date||'—'}</td>
+      <td class="td-m" style="white-space:nowrap">${s.date||'—'}</td>
       <td style="font-size:.82rem">${vendor}</td>
-      <td class="td-s" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${desc}</td>
+      <td class="td-s" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${desc}">${desc}</td>
       <td class="td-m" style="text-align:right"><strong style="color:var(--forest)">${fmt(s.total)}</strong></td>
       <td style="font-size:.82rem">${s.payMethod||'—'}</td>
       <td class="td-m" style="text-align:center">${disc}</td>
       <td style="font-size:.8rem">${cli}</td>
-      <td class="ts tc" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.note||'—'}</td>
+      <td class="ts tc" style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.note||'—'}</td>
+      <td style="text-align:center">${origenBadge}</td>
+      <td style="text-align:center;white-space:nowrap">
+        <button class="btn btn-g btn-sm" style="padding:4px 10px;font-size:.72rem" onclick="openEditSale('${s.id}')">✏ Editar</button>
+      </td>
     </tr>`;
   }).join('');
 }
 function filterSales(){const d=$('fDate').value;renderSales(d?DB.sales.filter(s=>s.date&&s.date.includes(d.slice(5).split('-').reverse().join('/'))):null);}
 function voidSale(id){if(!confirm('¿Anular esta venta?'))return;DB.sales=DB.sales.filter(s=>s.id!==id);renderSales();refreshDash();toast('Venta anulada','warn');}
 
+let _editSaleId=null;
+
+function openEditSale(id){
+  const s=DB.sales.find(x=>String(x.id)===String(id));
+  if(!s){toast('Venta no encontrada','err');return;}
+  _editSaleId=id;
+  $('esFecha').value   = s.date||'';
+  $('esVendedor').value= s.userName||'';
+  // Descripción: join lines or use desc
+  const desc=s.lines&&s.lines.length?s.lines.map(l=>l.itemName).join(', '):(s.desc||'');
+  $('esDesc').value    = desc;
+  $('esValor').value   = s.total||'';
+  $('esDisc').value    = s.discount||'';
+  $('esMedio').value   = s.payMethod||'';
+  $('esCliente').value = s.cliente?.nombre||s.clienteNombre||'';
+  $('esTel').value     = s.cliente?.tel||'';
+  $('esNota').value    = s.note||'';
+  const isSheet=s.source==='sheets';
+  $('esOrigen').innerHTML=isSheet
+    ?'📊 <strong>Sheets</strong> — los cambios se guardarán en Google Sheets'
+    :'✍ <strong>Manual</strong> — ingresada desde la app';
+  openOv('ovEditSale');
+}
+
+function saveEditSale(){
+  const s=DB.sales.find(x=>String(x.id)===String(_editSaleId));
+  if(!s){toast('Venta no encontrada','err');return;}
+
+  const newDesc=$('esDesc').value.trim();
+  const newValor=parseFloat($('esValor').value)||s.total;
+  const newDisc=parseFloat($('esDisc').value)||0;
+
+  // Update sale object
+  s.date      = $('esFecha').value.trim()||s.date;
+  s.userName  = $('esVendedor').value.trim()||s.userName;
+  s.desc      = newDesc;
+  s.total     = newValor;
+  s.subtotal  = newValor;
+  s.discount  = newDisc;
+  s.payMethod = $('esMedio').value.trim()||s.payMethod;
+  s.note      = $('esNota').value.trim();
+  // Update lines description
+  if(s.lines&&s.lines.length===1){ s.lines[0].itemName=newDesc; s.lines[0].price=newValor; }
+  // Update cliente
+  const cliName=$('esCliente').value.trim();
+  const cliTel=$('esTel').value.trim();
+  s.cliente={nombre:cliName||null, tel:cliTel||null, dni:s.cliente?.dni||null};
+  s.clienteNombre=cliName||null;
+
+  // Write back to Sheets if it came from there
+  if(s.source==='sheets'){
+    const pad=n=>String(n).padStart(2,'0');
+    postToScript({
+      action:   'editVenta',
+      sheetName: s.sheetName,
+      rowDesc:   s.desc,           // used to locate the row
+      fecha:     s.date,
+      vendedor:  s.userName,
+      desc:      s.desc,
+      valor:     s.total,
+      medio:     s.payMethod,
+      descuento: s.discount||'',
+      cliente:   cliName||'',
+      notas:     s.note||''
+    }).catch(e=>console.warn('Write failed:',e));
+  }
+
+  closeOv('ovEditSale');
+  renderSales();refreshDash();
+  toast('Venta actualizada');
+}
+
+function deleteEditSale(){
+  if(!confirm('¿Eliminar esta venta? Esta acción no se puede deshacer.')) return;
+  DB.sales=DB.sales.filter(x=>String(x.id)!==String(_editSaleId));
+  closeOv('ovEditSale');
+  renderSales();refreshDash();
+  toast('Venta eliminada','warn');
+}
+
 /* ════════════════════════════════════
    GOOGLE SHEETS SYNC
-   Sheet ID: 1SSsDjT0b83Tz-tLcmAWWCrRPLonjQUwmPUQgLumNXik
+   Sheet ID: 1R-EH59wDbVk_BC9gLXz4wCV1JT5OqxoZELWXI05nZ6o
 ════════════════════════════════════ */
-const SHEET_ID='1SSsDjT0b83Tz-tLcmAWWCrRPLonjQUwmPUQgLumNXik';
+const SHEET_ID='1R-EH59wDbVk_BC9gLXz4wCV1JT5OqxoZELWXI05nZ6o';
 
-// Month tabs to import — uses sheet name parameter (works without knowing gid)
-// Format: {name: sheet tab name, year, month (1-based)}
+// Todas las pestañas de meses disponibles
 const MONTH_TABS=[
-  {name:'Marzo 26',    year:2026, month:3},
-  {name:'Febrero 26',  year:2026, month:2},
-  {name:"Enero '26",   year:2026, month:1},
-  {name:"Enero ´26",   year:2026, month:1},
-  {name:"Diciembre '25", year:2025, month:12},
-  {name:"Diciembre ´25", year:2025, month:12},
+  {name:'Marzo 26',        year:2026, month:3},
+  {name:'Febrero 26',      year:2026, month:2},
+  {name:"Enero '26",       year:2026, month:1},
+  {name:"Enero ´26",       year:2026, month:1},
+  {name:"Diciembre '25",   year:2025, month:12},
+  {name:"Diciembre ´25",   year:2025, month:12},
+  {name:"Noviembre '25",   year:2025, month:11},
+  {name:"Noviembre ´25",   year:2025, month:11},
+  {name:"Octubre '25",     year:2025, month:10},
+  {name:"Octubre ´25",     year:2025, month:10},
+  {name:"Septiembre '25",  year:2025, month:9},
+  {name:"Septiembre ´25",  year:2025, month:9},
+  {name:"Agosto '25",      year:2025, month:8},
+  {name:"Agosto ´25",      year:2025, month:8},
+  {name:"Julio '25",       year:2025, month:7},
+  {name:"Julio ´25",       year:2025, month:7},
+  {name:"Junio '25",       year:2025, month:6},
+  {name:"Junio ´25",       year:2025, month:6},
 ];
 
 function showSyncStatus(msg,visible=true){
@@ -1414,20 +1548,27 @@ function parseSheetCSV(csvText, tabInfo){
   const hdr=parseLine(lines[0]).map(h=>h.toLowerCase().replace(/["""´`#]/g,'').trim());
   const colIdx=k=>hdr.findIndex(h=>h.includes(k));
 
-  // New format: # | Fecha | Vendedor | Descripción | Valor | Medio de pago | Descuento | Cliente | Notas
+  // New format: # | Fecha | Vendedor | Descripción | Descuento | Valor de venta | Medio de pago | Modalidad | Cliente | Notas
   // Also supports old format: Venta | Fecha | Valor | Medio | Comision | Comentario
-  const iDesc   = colIdx('descripci')||colIdx('venta');   // Descripción or Venta
-  const iFecha  = colIdx('fecha');
-  const iVendor = colIdx('vendedor');
-  const iValor  = colIdx('valor');
-  const iMedio  = colIdx('medio');
-  const iDesc2  = hdr.findIndex(h=>h.includes('descripci')); // explicit fallback
-  const iDescFinal = iDesc2>=0 ? iDesc2 : hdr.findIndex(h=>h.includes('venta'));
-  const iDisc   = colIdx('descuento');
-  const iCliente= colIdx('cliente');
-  const iNotas  = colIdx('notas')||colIdx('coment');
+  const iFecha   = colIdx('fecha');
+  const iVendor  = colIdx('vendedor');
+  const iDescFinal = (() => {
+    let i = colIdx('descripci'); if(i>=0) return i;
+    i = colIdx('venta'); if(i>=0) return i;
+    return -1;
+  })();
+  const iDisc    = colIdx('descuento');
+  const iValor   = (() => {
+    let i = hdr.findIndex(h=>h.includes('valor de venta')); if(i>=0) return i;
+    i = hdr.findIndex(h=>h.includes('valor') && !h.includes('descuento')); if(i>=0) return i;
+    return colIdx('valor');
+  })();
+  const iMedio   = colIdx('medio');
+  const iModal   = colIdx('modalidad');
+  const iCliente = colIdx('cliente');
+  const iNotas   = colIdx('notas') >= 0 ? colIdx('notas') : colIdx('coment');
 
-  if(iDescFinal<0&&iValor<0) return [];
+  if(iDescFinal<0 && iValor<0) return [];
 
   const sales=[];
   for(let i=1;i<lines.length;i++){
@@ -1435,9 +1576,9 @@ function parseSheetCSV(csvText, tabInfo){
     if(c.every(x=>!x)) continue;
     const get=idx=>(idx>=0&&c[idx])?c[idx].replace(/^"|"$/g,'').trim():'';
 
-    // Skip row if it looks like a header repeat or total row
+    // Skip header repeats or total rows
     const firstCell=get(0).toLowerCase();
-    if(firstCell==='#'||firstCell==='total'||firstCell==='venta'||firstCell==='descripci\u00f3n') continue;
+    if(firstCell==='#'||firstCell==='total') continue;
 
     const rawValor=get(iValor);
     const pn=s=>{
@@ -1449,19 +1590,28 @@ function parseSheetCSV(csvText, tabInfo){
       return parseFloat(s)||0;
     };
     const valor=pn(rawValor);
-    if(isNaN(valor)||valor<=0) continue;
+    if(!valor||valor<=0) continue;
 
     const desc=get(iDescFinal)||'(sin descripción)';
+    const medioRaw=get(iMedio);
+    // Merge medio + modalidad if both present
+    const modalidad=get(iModal);
+    const medioFinal=medioRaw&&modalidad&&modalidad.toLowerCase()!==medioRaw.toLowerCase()
+      ?`${medioRaw} — ${modalidad}`
+      :(medioRaw||modalidad||'');
     const clienteRaw=get(iCliente);
+    const discRaw=get(iDisc);
+    const discVal=discRaw?parseFloat(discRaw.replace('%',''))||0:0;
+
     sales.push({
-      id:`sh_${tabInfo.name.replace(/\s/g,'')}_${i}`,
+      id:`sh_${tabInfo.name.replace(/[\s'´]/g,'')}_${i}`,
       source:'sheets',
       sheetName:tabInfo.name,
       date:parseSheetDate(get(iFecha), tabInfo.year),
       desc,
       total:valor,
-      payMethod:normalizePayMethod(get(iMedio)),
-      discount:parseFloat(get(iDisc))||0,
+      payMethod:normalizePayMethod(medioFinal),
+      discount:discVal,
       note:get(iNotas),
       clienteNombre:clienteRaw||null,
       cliente:clienteRaw?{nombre:clienteRaw,tel:null,dni:null}:null,
@@ -1486,24 +1636,13 @@ async function syncSheets(){
     const imported=[];
     const skipped=[];
 
-    // Try gid=345738594 (Marzo 26 — confirmed)
-    // For others, try by sheet name
-    const tabsToTry=[
-      {name:'Marzo 26',      year:2026, month:3,  gid:'345738594'},
-      {name:'Febrero 26',    year:2026, month:2},
-      {name:"Enero '26",     year:2026, month:1},
-      {name:"Enero ´26",     year:2026, month:1},
-      {name:"Diciembre '25", year:2025, month:12},
-      {name:"Diciembre ´25", year:2025, month:12},
-    ];
-
-    for(const tab of tabsToTry){
+    // Use MONTH_TABS — all by sheet name, no hardcoded gids needed
+    for(const tab of MONTH_TABS){
       showSyncStatus(`Importando: ${tab.name}…`);
       try{
-        const csv=tab.gid ? await fetchSheetByGid(tab.gid) : await fetchSheetByName(tab.name);
+        const csv=await fetchSheetByName(tab.name);
         const sales=parseSheetCSV(csv,tab);
         if(sales.length){
-          // Deduplicate by id
           const existingIds=new Set(DB.sales.map(s=>s.id));
           const newSales=sales.filter(s=>!existingIds.has(s.id));
           DB.sales.push(...newSales);
