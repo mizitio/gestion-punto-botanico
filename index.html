@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sylvan · Stock & Ventas</title>
+<title>Sistema de gestión · Punto Botánico</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
 <style>
@@ -209,6 +209,12 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
 .gasto-tab.active{background:var(--forest);border-color:var(--forest);color:white}
 .btn-warn{background:rgba(202,118,59,.12);border:1.5px solid var(--terra);color:var(--terra)}
 .btn-warn:hover{background:var(--terra);color:white}
+.range-chip{padding:5px 13px;border:1.5px solid var(--mist);border-radius:99px;font-family:'Syne',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;background:white;color:var(--sage);transition:var(--t)}
+.range-chip:hover{border-color:var(--sage);color:var(--forest)}
+.range-chip.active{background:var(--forest);border-color:var(--forest);color:white}
+.insight-card{flex:1;min-width:200px;padding:12px 16px;border-radius:var(--r-md);background:var(--cream);border:1.5px solid var(--mist);font-size:.8rem}
+.insight-card .ic-val{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;margin-top:4px}
+.insight-card .ic-lbl{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage)}
 
 
 /* ─ ITEM SEARCH AUTOCOMPLETE ─ */
@@ -367,8 +373,8 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
           <span id="syncMsg">Sincronizando…</span>
         </div>
         <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
-        <div class="t-scroll"><table>
-          <thead><tr><th>#</th><th>Fecha</th><th>Vendedor</th><th>Descripción</th><th style="text-align:right">Valor</th><th>Medio de pago</th><th>Desc.</th><th>Cliente</th><th>Notas</th><th>Origen</th><th></th></tr></thead>
+        <div class="t-scroll" style="max-height:60vh;overflow-y:auto"><table>
+          <thead style="position:sticky;top:0;z-index:2"><tr><th>#</th><th>Fecha</th><th>Vendedor</th><th>Descripción</th><th style="text-align:right">Valor</th><th>Medio de pago</th><th>Desc.</th><th>Cliente</th><th>Notas</th><th>Origen</th><th></th></tr></thead>
           <tbody id="salesT"><tr><td class="td-empty" colspan="11">Sin ventas. Sincronizá desde Google Sheets o registrá una venta.</td></tr></tbody>
         </table></div>
       </div>
@@ -430,21 +436,28 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
     <div id="pg-metricas" class="page">
 
       <div class="card mb20">
-        <div class="card-hd" style="flex-wrap:wrap;gap:12px">
-          <span class="card-ttl">Ventas vs. Gastos — punto de equilibrio</span>
-          <div class="flex g8" style="align-items:center">
-            <select class="finp" style="width:110px" id="chartYear" onchange="renderChart()"></select>
+        <div class="card-hd" style="flex-wrap:wrap;gap:10px">
+          <span class="card-ttl">Ventas vs. Gastos</span>
+          <div class="flex g8" style="flex-wrap:wrap;align-items:center">
+            <!-- Range chips -->
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="range-chip active" data-range="all"    onclick="setChartRange(this,'all')">Todo</button>
+              <button class="range-chip"         data-range="3m"    onclick="setChartRange(this,'3m')">3 meses</button>
+              <button class="range-chip"         data-range="6m"    onclick="setChartRange(this,'6m')">6 meses</button>
+              <button class="range-chip"         data-range="year"  onclick="setChartRange(this,'year')">Este año</button>
+              <button class="range-chip"         data-range="12m"   onclick="setChartRange(this,'12m')">Últimos 12m</button>
+            </div>
           </div>
         </div>
 
-        <!-- KPIs del mes -->
+        <!-- KPIs del período -->
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--mist);border-top:1px solid var(--mist)">
           <div style="background:var(--paper);padding:16px 20px">
-            <div style="font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--sage);margin-bottom:6px">Ventas del mes</div>
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--sage);margin-bottom:6px">Ventas del período</div>
             <div id="kpiVentasMes" style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--forest);font-weight:600">$0</div>
           </div>
           <div style="background:var(--paper);padding:16px 20px">
-            <div style="font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--sage);margin-bottom:6px">Gastos del mes</div>
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--sage);margin-bottom:6px">Gastos del período</div>
             <div id="kpiGastosMes" style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--terra);font-weight:600">$0</div>
           </div>
           <div style="background:var(--paper);padding:16px 20px">
@@ -460,8 +473,12 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
         <div style="padding:20px 24px">
           <canvas id="rentChart" height="110"></canvas>
         </div>
+
+        <!-- Insights -->
+        <div id="insightsBox" style="display:none;padding:0 24px 20px;display:flex;flex-wrap:wrap;gap:10px"></div>
+
         <div class="t-scroll" style="border-top:1px solid var(--mist)"><table>
-          <thead><tr><th>Mes</th><th>Ventas</th><th>Gs. Fijos</th><th>Gs. Variables</th><th>Total egresos</th><th>Resultado</th></tr></thead>
+          <thead><tr><th>Período</th><th>Ventas</th><th>Gs. Fijos</th><th>Gs. Variables</th><th>Total egresos</th><th>Resultado</th></tr></thead>
           <tbody id="tResumen"><tr><td class="td-empty" colspan="6">Sincronizá ventas y gastos para ver el resumen</td></tr></tbody>
         </table></div>
       </div>
@@ -1882,8 +1899,8 @@ function saveGF(){
 }
 function delGF(id){if(!confirm('¿Eliminar?'))return;DB.gastosFijos=DB.gastosFijos.filter(x=>x.id!==id);renderGF();renderChart();toast('Eliminado','warn');}
 function renderGF(){
-  const tb=$('tGF');
-  if(!DB.gastosFijos.length){tb.innerHTML='<tr><td class="td-empty" colspan="6">Sin gastos fijos. Sincronizá desde Google Sheets o agregá uno.</td></tr>';$('totalGF').textContent=fmt(0);return;}
+  const tb=$('tGF'); if(!tb) return;
+  if(!DB.gastosFijos.length){tb.innerHTML='<tr><td class="td-empty" colspan="6">Sin gastos fijos. Sincronizá desde Google Sheets o agregá uno.</td></tr>';const el=$('totalGF');if(el)el.textContent=fmt(0);return;}
   tb.innerHTML=DB.gastosFijos.map(g=>`<tr>
     <td class="td-s">${g.concepto}</td>
     <td class="ts tc">${g.proveedor||'—'}</td>
@@ -1892,14 +1909,14 @@ function renderGF(){
     <td><span class="bdg" style="font-size:.58rem;background:${g.source==='sheets'?'rgba(238,168,59,.15)':'rgba(19,75,66,.08)'};color:${g.source==='sheets'?'#9a6a00':'var(--forest)'}">${g.source==='sheets'?'📊 Sheets':'✍ Manual'}</span></td>
     <td>${g.source!=='sheets'?`<button class="btn btn-d btn-sm btn-ic" onclick="delGF('${g.id}')">✕</button>`:''}</td>
   </tr>`).join('');
-  $('totalGF').textContent=fmt(DB.gastosFijos.reduce((s,g)=>s+g.monto,0));
+  const el=$('totalGF');if(el)el.textContent=fmt(DB.gastosFijos.reduce((s,g)=>s+g.monto,0));
 }
 
 function renderGV(){
+  const tb=$('tGV'); if(!tb) return;
   const mes=$('gvMes')?$('gvMes').value:'';
   const data=mes?DB.gastosVar.filter(g=>g.cat&&g.fecha&&g.fecha.startsWith?.(mes)||(!g.fecha&&true)):DB.gastosVar;
-  const tb=$('tGV');
-  if(!data.length){tb.innerHTML='<tr><td class="td-empty" colspan="6">Sin gastos variables. Sincronizá desde Google Sheets.</td></tr>';$('totalGV').textContent=fmt(0);return;}
+  if(!data.length){tb.innerHTML='<tr><td class="td-empty" colspan="6">Sin gastos variables. Sincronizá desde Google Sheets.</td></tr>';const el=$('totalGV');if(el)el.textContent=fmt(0);return;}
   tb.innerHTML=data.map(g=>`<tr>
     <td class="td-s">${g.concepto}</td>
     <td class="ts tc">${g.proveedor||g.notas||'—'}</td>
@@ -1908,7 +1925,7 @@ function renderGV(){
     <td><span class="bdg" style="font-size:.58rem;background:${g.source==='sheets'?'rgba(238,168,59,.15)':'rgba(19,75,66,.08)'};color:${g.source==='sheets'?'#9a6a00':'var(--forest)'}">${g.source==='sheets'?'📊 Sheets':'✍ Manual'}</span></td>
     <td>${g.source!=='sheets'?`<button class="btn btn-d btn-sm btn-ic" onclick="delGV('${g.id}')">✕</button>`:''}</td>
   </tr>`).join('');
-  $('totalGV').textContent=fmt(data.reduce((s,g)=>s+g.monto,0));
+  const el=$('totalGV');if(el)el.textContent=fmt(data.reduce((s,g)=>s+g.monto,0));
 }
 
 // ── Gastos Variables manual ──
@@ -2088,91 +2105,177 @@ async function syncGastos(){
 const MESES=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 let _chartInst=null;
 
-function getMonthlyData(year){
-  const gfTotal=DB.gastosFijos.reduce((s,g)=>s+g.monto,0);
-  return MESES.map((_,m)=>{
-    const ym=`${year}-${String(m+1).padStart(2,'0')}`;
-    const mm=String(m+1).padStart(2,'0');
-    const monthSales=DB.sales.filter(s=>{
-      if(!s.date) return false;
-      if(s.source==='sheets') return s.date.endsWith(`/${mm}/${year}`)||s.date.match(new RegExp(`/${mm}/${String(year).slice(-2)}$`));
-      return s.date.startsWith(ym);
-    });
-    const ventas=monthSales.reduce((s,v)=>s+v.total,0);
-    // gastos variables del mes (sheets gastos don't have fecha, count all)
-    const gvSheets=DB.gastosVar.filter(g=>g.source==='sheets').reduce((s,g)=>s+g.monto,0);
-    const gvManual=DB.gastosVar.filter(g=>g.source!=='sheets'&&g.fecha&&g.fecha.startsWith(ym)).reduce((s,g)=>s+g.monto,0);
-    const gv=gvManual+(m===0?gvSheets:0); // spread sheets variables into first month only if no fecha
-    const costo=monthSales.reduce((sum,sale)=>{
+let _chartRange='all'; // 'all' | '3m' | '6m' | 'year' | '12m'
 
-      if(!sale.lines) return sum;
-      return sum+sale.lines.reduce((ls,ln)=>{
-        const it=DB.items.find(x=>x.id===ln.itemId);
-        return ls+(it?it.cost*ln.qty:0);
-      },0);
-    },0);
-    const totalEgresos=gfTotal+gv+costo;
-    return {ventas,gf:gfTotal,gv,costo,totalEgresos,resultado:ventas-totalEgresos};
+function setChartRange(el, range){
+  document.querySelectorAll('.range-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  _chartRange=range;
+  renderChart();
+}
+
+function getPeriodsForRange(range){
+  // Returns array of {year, month(0-based), label} sorted ascending
+  const now=new Date();
+  const curY=now.getFullYear(), curM=now.getMonth();
+
+  // Collect all months that have any sales or gastos data
+  const allPeriods=new Set();
+  DB.sales.forEach(s=>{
+    if(!s.date) return;
+    let y,m;
+    if(s.source==='sheets'){
+      const p=s.date.split('/');
+      if(p.length>=3){y=parseInt(p[2]);m=parseInt(p[1])-1;}
+      else if(p.length===2){y=curY;m=parseInt(p[1])-1;}
+    } else {
+      y=parseInt(s.date.slice(0,4)); m=parseInt(s.date.slice(5,7))-1;
+    }
+    if(!isNaN(y)&&!isNaN(m)) allPeriods.add(`${y}-${m}`);
   });
+  // Always include current month
+  allPeriods.add(`${curY}-${curM}`);
+
+  let periods=[...allPeriods].map(k=>{const[y,m]=k.split('-').map(Number);return{year:y,month:m};})
+    .sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month);
+
+  if(range==='3m'){
+    const cutoff=new Date(curY,curM-2,1);
+    periods=periods.filter(p=>new Date(p.year,p.month,1)>=cutoff);
+  } else if(range==='6m'){
+    const cutoff=new Date(curY,curM-5,1);
+    periods=periods.filter(p=>new Date(p.year,p.month,1)>=cutoff);
+  } else if(range==='year'){
+    periods=periods.filter(p=>p.year===curY);
+  } else if(range==='12m'){
+    const cutoff=new Date(curY,curM-11,1);
+    periods=periods.filter(p=>new Date(p.year,p.month,1)>=cutoff);
+  }
+  // Ensure at least current month
+  if(!periods.length) periods=[{year:curY,month:curM}];
+  return periods;
+}
+
+function getDataForPeriod(year, month){
+  const ym=`${year}-${String(month+1).padStart(2,'0')}`;
+  const mm=String(month+1).padStart(2,'0');
+  const yr2=String(year).slice(-2);
+  const monthSales=DB.sales.filter(s=>{
+    if(!s.date) return false;
+    if(s.source==='sheets'){
+      return s.date.includes(`/${mm}/${year}`)||s.date.match(new RegExp(`/${mm}/${yr2}$`))||s.date.match(new RegExp(`^${mm}/${yr2}`));
+    }
+    return s.date.startsWith(ym);
+  });
+  const ventas=monthSales.reduce((s,v)=>s+v.total,0);
+  const gfTotal=DB.gastosFijos.reduce((s,g)=>s+g.monto,0);
+  const gvManual=DB.gastosVar.filter(g=>g.source!=='sheets'&&g.fecha&&g.fecha.startsWith(ym)).reduce((s,g)=>s+g.monto,0);
+  const gvSheets=month===0?DB.gastosVar.filter(g=>g.source==='sheets').reduce((s,g)=>s+g.monto,0):0;
+  const gv=gvManual+gvSheets;
+  const totalEgresos=gfTotal+gv;
+  return {ventas, gf:gfTotal, gv, totalEgresos, resultado:ventas-totalEgresos, numVentas:monthSales.length};
+}
+
+function buildInsights(periods, dataArr){
+  const insights=[];
+  const totVentas=dataArr.reduce((s,d)=>s+d.ventas,0);
+  const totGastos=dataArr.reduce((s,d)=>s+d.totalEgresos,0);
+  const totRes=totVentas-totGastos;
+  const mesesConVentas=dataArr.filter(d=>d.ventas>0);
+
+  if(mesesConVentas.length>0){
+    const avgMensual=totVentas/mesesConVentas.length;
+    insights.push({lbl:'Venta promedio mensual',val:fmt(avgMensual),color:'var(--forest)'});
+  }
+
+  // Mejor mes
+  const best=dataArr.reduce((b,d,i)=>d.ventas>b.v?{v:d.ventas,i}:b,{v:0,i:0});
+  if(best.v>0){
+    const p=periods[best.i];
+    insights.push({lbl:'Mejor mes',val:`${MESES[p.month]} ${p.year}: ${fmt(best.v)}`,color:'var(--forest)'});
+  }
+
+  // Margen
+  if(totVentas>0){
+    const margin=((totVentas-totGastos)/totVentas*100).toFixed(1);
+    insights.push({lbl:'Margen del período',val:`${margin}%`,color:parseFloat(margin)>=0?'var(--forest)':'var(--rust)'});
+  }
+
+  // Tendencia (compara última mitad vs primera mitad)
+  if(dataArr.length>=4){
+    const mid=Math.floor(dataArr.length/2);
+    const firstHalf=dataArr.slice(0,mid).reduce((s,d)=>s+d.ventas,0);
+    const secHalf=dataArr.slice(mid).reduce((s,d)=>s+d.ventas,0);
+    if(firstHalf>0){
+      const trend=((secHalf-firstHalf)/firstHalf*100).toFixed(0);
+      insights.push({lbl:'Tendencia de ventas',val:`${trend>=0?'▲':'▼'} ${Math.abs(trend)}%`,color:trend>=0?'var(--forest)':'var(--rust)'});
+    }
+  }
+
+  // Total ventas
+  insights.push({lbl:'Total ventas del período',val:fmt(totVentas),color:'var(--forest)'});
+  // Resultado
+  insights.push({lbl:'Resultado del período',val:(totRes>=0?'+':'')+fmt(totRes),color:totRes>=0?'var(--forest)':'var(--rust)'});
+
+  return insights;
 }
 
 function renderChart(){
-  const yearSel=$('chartYear');
-  if(!yearSel) return;
-  // Collect years from sales (handle both date formats) and current year
-  const salesYears=DB.sales.map(s=>{
-    if(!s.date) return null;
-    if(s.source==='sheets'){const p=s.date.split('/');return p.length>=3?p[2]:null;}
-    return s.date.slice(0,4);
-  }).filter(Boolean);
-  const yrs=[...new Set([...salesYears,String(new Date().getFullYear())])].sort();
-  const curY=yearSel.value||yrs[yrs.length-1];
-  yearSel.innerHTML=yrs.map(y=>`<option value="${y}" ${y===curY?'selected':''}>${y}</option>`).join('');
-  const data=getMonthlyData(curY);
+  const periods=getPeriodsForRange(_chartRange);
+  const dataArr=periods.map(p=>getDataForPeriod(p.year,p.month));
+  const labels=periods.map(p=>`${MESES[p.month].slice(0,3)} ${String(p.year).slice(-2)}`);
 
-  // Update KPI cards for current month
-  const curM=new Date().getMonth();
-  const curData=data[curM];
-  if($('kpiVentasMes'))$('kpiVentasMes').textContent=fmt(curData.ventas);
-  if($('kpiGastosMes'))$('kpiGastosMes').textContent=fmt(curData.totalEgresos);
-  const res=curData.resultado;
+  // KPIs — sum over range
+  const totV=dataArr.reduce((s,d)=>s+d.ventas,0);
+  const totG=dataArr.reduce((s,d)=>s+d.totalEgresos,0);
+  const totR=totV-totG;
+  if($('kpiVentasMes'))$('kpiVentasMes').textContent=fmt(totV);
+  if($('kpiGastosMes'))$('kpiGastosMes').textContent=fmt(totG);
   const kpiRes=$('kpiResultadoMes');
-  if(kpiRes){kpiRes.textContent=(res>=0?'+':'')+fmt(res);kpiRes.style.color=res>=0?'var(--forest)':'var(--rust)';}
-  // Punto de equilibrio: mes donde ventas supera gastos por primera vez
-  const eqMonth=data.findIndex(d=>d.ventas>0&&d.resultado>=0);
-  if($('kpiEquilibrio'))$('kpiEquilibrio').textContent=eqMonth>=0?`${MESES[eqMonth]} ${curY}`:'Aún no alcanzado';
+  if(kpiRes){kpiRes.textContent=(totR>=0?'+':'')+fmt(totR);kpiRes.style.color=totR>=0?'var(--forest)':'var(--rust)';}
+  const eqIdx=dataArr.findIndex(d=>d.ventas>0&&d.resultado>=0);
+  if($('kpiEquilibrio'))$('kpiEquilibrio').textContent=eqIdx>=0?`${MESES[periods[eqIdx].month]} ${periods[eqIdx].year}`:'Aún no alcanzado';
 
-  // Render summary table — only months with data
-  const tb=$('tResumen');
-  const hasData=data.some(d=>d.ventas>0||d.totalEgresos>0);
-  if(!hasData){
-    tb.innerHTML='<tr><td class="td-empty" colspan="7">Sincronizá ventas y gastos para ver el resumen</td></tr>';
+  // Summary table
+  const tb=$('tResumen'); if(!tb) return;
+  if(!dataArr.some(d=>d.ventas>0||d.totalEgresos>0)){
+    tb.innerHTML='<tr><td class="td-empty" colspan="6">Sincronizá ventas y gastos para ver el resumen</td></tr>';
   } else {
-    tb.innerHTML=data.map((d,i)=>{
+    tb.innerHTML=dataArr.map((d,i)=>{
       if(d.ventas===0&&d.totalEgresos===0) return '';
       const pos=d.resultado>=0;
+      const p=periods[i];
       return `<tr>
-        <td><strong>${MESES[i]}</strong></td>
+        <td><strong>${MESES[p.month]} ${p.year}</strong></td>
         <td class="td-m" style="color:var(--forest);font-weight:600">${fmt(d.ventas)}</td>
         <td class="td-m">${fmt(d.gf)}</td>
         <td class="td-m">${fmt(d.gv)}</td>
-        <td class="td-m">${fmt(d.costo)}</td>
         <td class="td-m">${fmt(d.totalEgresos)}</td>
         <td class="td-m"><strong style="color:${pos?'var(--forest)':'var(--rust)'}">${pos?'+':''}${fmt(d.resultado)}</strong></td>
       </tr>`;
     }).join('');
   }
 
-  // Load Chart.js if needed, then draw
+  // Insights
+  const ib=$('insightsBox');
+  if(ib){
+    const ins=buildInsights(periods,dataArr);
+    if(ins.length){
+      ib.style.display='flex';
+      ib.innerHTML=ins.map(i=>`<div class="insight-card"><div class="ic-lbl">${i.lbl}</div><div class="ic-val" style="color:${i.color}">${i.val}</div></div>`).join('');
+    } else ib.style.display='none';
+  }
+
+  // Draw chart
   if(!window.Chart){
     const s=document.createElement('script');
     s.src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js';
-    s.onload=()=>drawChart(data);
+    s.onload=()=>drawChart(labels,dataArr);
     document.head.appendChild(s);
-  } else drawChart(data);
+  } else drawChart(labels,dataArr);
 }
 
-function drawChart(data){
+function drawChart(labels,data){
   const canvas=$('rentChart');
   if(!canvas) return;
   const ctx=canvas.getContext('2d');
@@ -2180,13 +2283,13 @@ function drawChart(data){
   _chartInst=new Chart(ctx,{
     type:'bar',
     data:{
-      labels:MESES,
+      labels,
       datasets:[
         {label:'Ventas',data:data.map(d=>d.ventas),backgroundColor:'rgba(19,75,66,.75)',borderRadius:6,order:2},
         {label:'Gastos fijos',data:data.map(d=>d.gf),backgroundColor:'rgba(202,118,59,.55)',borderRadius:6,order:2},
         {label:'Gastos variables',data:data.map(d=>d.gv),backgroundColor:'rgba(238,168,59,.65)',borderRadius:6,order:2},
         {label:'Resultado',data:data.map(d=>d.resultado),type:'line',
-         borderColor:'#134B42',backgroundColor:'rgba(19,75,66,.08)',
+         borderColor:'#134B42',backgroundColor:'rgba(19,75,66,.06)',
          borderWidth:2.5,pointRadius:4,pointBackgroundColor:'#134B42',fill:true,order:1,tension:.35}
       ]
     },
@@ -2195,7 +2298,7 @@ function drawChart(data){
       interaction:{mode:'index',intersect:false},
       plugins:{
         legend:{labels:{font:{family:"'Syne',sans-serif",size:12},color:'#3a4340'}},
-        tooltip:{callbacks:{label:ctx=>' '+ctx.dataset.label+': '+fmt(ctx.raw)}}
+        tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+fmt(c.raw)}}
       },
       scales:{
         x:{grid:{display:false},ticks:{font:{family:"'Syne',sans-serif",size:11},color:'#80917D'}},
