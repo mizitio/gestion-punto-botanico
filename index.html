@@ -304,6 +304,10 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
   </div>
   <div class="nav-group">
     <div class="nav-lbl">Sistema</div>
+    <div class="nav-item" data-pg="clientes">
+      <svg class="nav-ic" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      Clientes
+    </div>
     <div class="nav-item" data-pg="usuarios">
       <svg class="nav-ic" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       Usuarios
@@ -362,9 +366,12 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
       <div class="card">
         <div class="card-hd">
           <span class="card-ttl">Historial de ventas</span>
-          <div class="flex g8" style="flex-wrap:wrap">
-            <input type="date" class="finp" style="width:160px" id="fDate">
-            <button class="btn btn-g btn-sm" onclick="filterSales()">Filtrar</button>
+          <div class="flex g8" style="flex-wrap:wrap;align-items:center">
+            <span style="font-size:.78rem;color:var(--sage)">Desde</span>
+            <input type="date" class="finp" style="width:145px" id="fDateFrom" onchange="filterSales()">
+            <span style="font-size:.78rem;color:var(--sage)">Hasta</span>
+            <input type="date" class="finp" style="width:145px" id="fDateTo" onchange="filterSales()">
+            <button class="btn btn-g btn-sm" onclick="clearSalesFilter()">✕ Limpiar</button>
 <button id="syncBtn" style="display:none"></button>
             <button class="btn btn-p" onclick="openSaleModal()">+ Nueva venta</button>
           </div>
@@ -422,10 +429,31 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
       </div>
     </div>
 
+    <!-- CLIENTES -->
+    <div id="pg-clientes" class="page">
+      <div class="card">
+        <div class="card-hd">
+          <span class="card-ttl">Clientes</span>
+          <div class="flex g8">
+            <input type="text" class="finp" style="width:220px" id="clienteSearch" placeholder="Buscar por nombre o teléfono…" oninput="renderClientes()">
+            <button class="btn btn-p btn-sm" onclick="openOv('ovCliente');resetClienteForm()">+ Nuevo cliente</button>
+          </div>
+        </div>
+        <div class="t-scroll" style="max-height:70vh;overflow-y:auto">
+          <table>
+            <thead style="position:sticky;top:0;z-index:2">
+              <tr><th style="width:32px"></th><th>Nombre</th><th>Teléfono</th><th>Email</th><th>Mensaje fijo</th><th>Historial</th><th></th></tr>
+            </thead>
+            <tbody id="clientesT"><tr><td class="td-empty" colspan="7">Sin clientes aún. Agregá el primero.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- USUARIOS -->
     <div id="pg-usuarios" class="page">
       <div class="card">
-        <div class="card-hd"><span class="card-ttl">Usuarios del sistema</span><button class="btn btn-p btn-sm" onclick="openOv('ovUser')">+ Nuevo usuario</button></div>
+        <div class="card-hd"><span class="card-ttl">Usuarios del sistema</span><button class="btn btn-p btn-sm" onclick="openNewUser()">+ Nuevo usuario</button></div>
         <div class="card-bd"><div class="user-grid" id="userGrid"></div></div>
       </div>
     </div>
@@ -514,8 +542,18 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
 
       <!-- TABLE CARD -->
       <div class="card mb20">
-        <div class="card-hd">
-          <span class="card-ttl" id="gastoTabTitle">Gastos iniciales / fijos</span>
+        <div class="card-hd" style="flex-wrap:wrap;gap:10px">
+          <span class="card-ttl" id="gastoTabTitle">Gastos fijos mensuales</span>
+          <div id="gastosFijosFilter" class="flex g8" style="align-items:center;flex-wrap:wrap">
+            <span style="font-size:.78rem;color:var(--sage)">Mes</span>
+            <select class="finp" style="width:150px" id="gfMesSelect" onchange="filterGastosFijos()">
+              <option value="">Todos</option>
+            </select>
+            <span style="font-size:.78rem;color:var(--sage)">Rango</span>
+            <input type="date" class="finp" style="width:140px" id="gfDesde" onchange="filterGastosFijos()">
+            <input type="date" class="finp" style="width:140px" id="gfHasta" onchange="filterGastosFijos()">
+            <button class="btn btn-g btn-sm" onclick="clearGastosFilter()">✕</button>
+          </div>
           <button class="btn btn-p btn-sm" onclick="openAddGastoModal()">+ Agregar fila</button>
         </div>
         <div id="gastosWriteStatus" style="display:none;padding:8px 20px;background:rgba(238,168,59,.1);font-size:.78rem;color:#7a5500;align-items:center;gap:8px">
@@ -564,12 +602,13 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
       </div>
 
       <!-- DATOS DEL CLIENTE (colapsable) -->
-      <div style="margin-bottom:16px">
-        <button type="button" onclick="toggleClienteSection()" style="display:flex;align-items:center;gap:7px;background:none;border:none;cursor:pointer;padding:0;font-family:'Inter',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--sage)">
-          <svg id="clienteArrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition:.2s;transform:rotate(0deg)"><polyline points="9 18 15 12 9 6"/></svg>
-          Datos del cliente (opcional)
+      <div style="margin:4px 0 20px;padding-top:20px;border-top:1px solid var(--mist)">
+        <button type="button" onclick="toggleClienteSection()" style="display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;padding:0;font-family:'Inter',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--sage)">
+          <svg id="clienteArrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition:.2s;transform:rotate(0deg)"><polyline points="9 18 15 12 9 6"/></svg>
+          👤 Datos del cliente
+          <span style="font-weight:400;opacity:.6;letter-spacing:.04em;text-transform:none">(opcional)</span>
         </button>
-        <div id="clienteSection" style="display:none;margin-top:10px;padding:14px;background:var(--cream);border-radius:var(--r-md);border:1.5px solid var(--mist)">
+        <div id="clienteSection" style="display:none;margin-top:14px;padding:16px;background:var(--cream);border-radius:var(--r-md);border:1.5px solid var(--mist)">
           <div class="fr fr2" style="gap:12px">
             <div class="fc" style="grid-column:1/-1">
               <label class="flbl">Nombre del cliente</label>
@@ -686,15 +725,35 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
 <!-- MODAL: USUARIO -->
 <div class="ov" id="ovUser">
   <div class="modal modal-sm">
-    <div class="mhd"><span class="mttl">Nuevo usuario</span><button class="mx" onclick="closeOv('ovUser')">✕</button></div>
+    <div class="mhd"><span class="mttl" id="userMttl">Nuevo usuario</span><button class="mx" onclick="closeOv('ovUser')">✕</button></div>
     <div class="mbd">
+      <!-- Photo upload -->
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+        <div id="uAvaPreview" onclick="$('uFoto').click()" style="width:72px;height:72px;border-radius:50%;background:var(--mist);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;border:2px dashed var(--sage);flex-shrink:0;transition:var(--t)" title="Click para cambiar foto">
+          <span id="uAvaInitials" style="font-size:1.4rem;font-weight:700;color:var(--sage)">?</span>
+        </div>
+        <div>
+          <div style="font-size:.8rem;font-weight:600;color:var(--ink);margin-bottom:4px">Foto de perfil</div>
+          <button type="button" class="btn btn-g btn-sm" onclick="$('uFoto').click()">📷 Elegir foto</button>
+          <input type="file" id="uFoto" accept="image/*" style="display:none" onchange="previewUserPhoto(this)">
+        </div>
+      </div>
       <div class="fr fr2">
-        <div class="fc"><label class="flbl">Nombre *</label><input type="text" class="finp" id="uNom" placeholder="Nombre completo"></div>
-        <div class="fc"><label class="flbl">Rol</label><select class="finp" id="uRol"><option>Vendedor</option><option>Administrador</option><option>Repositor</option><option>Supervisor</option></select></div>
+        <div class="fc"><label class="flbl">Nombre *</label><input type="text" class="finp" id="uNom" placeholder="Nombre completo" oninput="updateUAvaInitials()"></div>
+        <div class="fc"><label class="flbl">Rol</label>
+          <select class="finp" id="uRol">
+            <option>Vendedor</option><option>Administrador</option>
+            <option>Repositor</option><option>Supervisor</option>
+          </select>
+        </div>
         <div class="fc" style="grid-column:1/-1"><label class="flbl">Email</label><input type="email" class="finp" id="uMail" placeholder="usuario@empresa.com"></div>
+        <div class="fc" style="grid-column:1/-1"><label class="flbl">Teléfono</label><input type="tel" class="finp" id="uTel" placeholder="+54 9 11 ····-····"></div>
       </div>
     </div>
-    <div class="mft"><button class="btn btn-g" onclick="closeOv('ovUser')">Cancelar</button><button class="btn btn-p" onclick="saveUser()">Guardar</button></div>
+    <div class="mft">
+      <button class="btn btn-g" onclick="closeOv('ovUser')">Cancelar</button>
+      <button class="btn btn-p" onclick="saveUser()">Guardar</button>
+    </div>
   </div>
 </div>
 
@@ -781,13 +840,111 @@ td{padding:12px 16px;color:#3a4340;vertical-align:middle}
   </div>
 </div>
 
+<!-- MODAL: CLIENTE -->
+<div class="ov" id="ovCliente">
+  <div class="modal modal-sm">
+    <div class="mhd">
+      <span class="mttl" id="clienteMttl">Nuevo cliente</span>
+      <button class="mx" onclick="closeOv('ovCliente')">✕</button>
+    </div>
+    <div class="mbd">
+      <div class="fr fr2">
+        <div class="fc" style="grid-column:1/-1">
+          <label class="flbl">Nombre completo *</label>
+          <input type="text" class="finp" id="clNombre" placeholder="Nombre y apellido">
+        </div>
+        <div class="fc">
+          <label class="flbl">Teléfono / WhatsApp</label>
+          <input type="tel" class="finp" id="clTel" placeholder="+54 9 11 ····-····">
+        </div>
+        <div class="fc">
+          <label class="flbl">DNI</label>
+          <input type="text" class="finp" id="clDni" placeholder="Número de documento">
+        </div>
+        <div class="fc" style="grid-column:1/-1">
+          <label class="flbl">Email</label>
+          <input type="email" class="finp" id="clEmail" placeholder="correo@ejemplo.com">
+        </div>
+        <div class="fc" style="grid-column:1/-1">
+          <label class="flbl">Notas internas</label>
+          <input type="text" class="finp" id="clNotas" placeholder="Cumpleaños, preferencias, dirección…">
+        </div>
+        <div class="fc" style="grid-column:1/-1">
+          <label class="flbl">Mensaje fijo visible <span style="font-weight:400;color:var(--sage)">(se muestra en la tabla)</span></label>
+          <input type="text" class="finp" id="clMensaje" placeholder="Ej: VIP — descuento 10%, cliente mayorista, etc.">
+        </div>
+        <div class="fc" style="grid-column:1/-1">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.82rem;color:var(--ink)">
+            <input type="checkbox" id="clPinned" style="width:16px;height:16px;accent-color:var(--amber)">
+            <span>📌 Pinear cliente (aparece siempre arriba de la tabla)</span>
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="mft">
+      <button class="btn btn-g" onclick="closeOv('ovCliente')">Cancelar</button>
+      <button class="btn btn-p" onclick="saveCliente()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: WHATSAPP -->
+<div class="ov" id="ovWA">
+  <div class="modal modal-sm">
+    <div class="mhd">
+      <span class="mttl">Enviar WhatsApp</span>
+      <button class="mx" onclick="closeOv('ovWA')">✕</button>
+    </div>
+    <div class="mbd">
+      <div style="font-size:.8rem;color:var(--sage);margin-bottom:12px">Para: <strong id="waNombre" style="color:var(--forest)">—</strong> · <span id="waTel">—</span></div>
+      <div class="fc mb16">
+        <label class="flbl">Mensaje</label>
+        <textarea class="finp" id="waMsg" rows="5" style="resize:vertical;font-size:.85rem;line-height:1.5"></textarea>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px">
+        <button class="btn btn-g btn-sm" onclick="setWATemplate('saludo')">👋 Saludo</button>
+        <button class="btn btn-g btn-sm" onclick="setWATemplate('gracias')">🙏 Gracias por tu compra</button>
+        <button class="btn btn-g btn-sm" onclick="setWATemplate('novedad')">🌿 Novedades</button>
+        <button class="btn btn-g btn-sm" onclick="setWATemplate('seguimiento')">📦 Seguimiento</button>
+      </div>
+    </div>
+    <div class="mft">
+      <button class="btn btn-g" onclick="closeOv('ovWA')">Cancelar</button>
+      <button class="btn btn-p" onclick="sendWA()" style="background:#25D366;border-color:#25D366">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Abrir WhatsApp
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
 /* ════════════════════════════════════
    STATE
 ════════════════════════════════════ */
-const DB={items:[],sales:[],providers:[],users:[{id:'u0',name:'Admin',role:'Administrador',email:'admin@empresa.com'}]};
+const DB={
+  items:[],
+  sales:[],
+  providers:[],
+  users:[{id:'u0',name:'Admin',role:'Administrador',email:'admin@empresa.com',foto:null}],
+  gastosFijos:[],
+  gastosVar:[],
+  clientes:[
+    {
+      id:'cl_ejemplo',
+      nombre:'María García',
+      tel:'+54 9 11 2345-6789',
+      dni:'',
+      email:'maria.garcia@ejemplo.com',
+      notas:'Cliente desde la apertura, le gustan las plantas tropicales',
+      mensaje:'⭐ Cliente VIP',
+      pinned:true,
+      creadoEn:'2025-06-01T00:00:00.000Z'
+    }
+  ]
+};
 let _editId=null,_sLines=[],_pay='';
 
 /* ════════════════════════════════════
@@ -812,7 +969,7 @@ function toast(m,t=''){
 /* ════════════════════════════════════
    NAVIGATION
 ════════════════════════════════════ */
-const PG_TITLE={dashboard:'Panel de control',ventas:'Ventas',metricas:'Métricas & Rentabilidad',gastos:'Gastos',stock:'Inventario / Stock',proveedores:'Proveedores',usuarios:'Usuarios'};
+const PG_TITLE={dashboard:'Panel de control',ventas:'Ventas',metricas:'Métricas & Rentabilidad',gastos:'Gastos',stock:'Inventario / Stock',proveedores:'Proveedores',clientes:'Clientes',usuarios:'Usuarios'};
 function goPage(name){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -821,8 +978,9 @@ function goPage(name){
   $('pgTitle').textContent=PG_TITLE[name]||name;
   if(name==='dashboard')refreshDash();
   if(name==='stock')renderStock();
-  if(name==='ventas')renderSales();
+  if(name==='ventas'){setDefaultSalesFilter();renderSales();}
   if(name==='proveedores')renderProvs();
+  if(name==='clientes')renderClientes();
   if(name==='usuarios')renderUsers();
 }
 document.querySelectorAll('.nav-item[data-pg]').forEach(el=>el.addEventListener('click',()=>goPage(el.dataset.pg)));
@@ -1351,6 +1509,12 @@ function confirmSale(){
   refreshDash();renderSales();renderStock();
 }
 function renderSales(rows=null){
+  // If no explicit rows, apply active date range filter
+  if(!rows){
+    const from=$('fDateFrom')?.value;
+    const to=$('fDateTo')?.value;
+    if(from||to){ filterSales(); return; }
+  }
   const data=rows||DB.sales;const tb=$('salesT');
   if(!data.length){tb.innerHTML='<tr><td class="td-empty" colspan="11">Sin ventas. Sincronizá desde Google Sheets o registrá una nueva.</td></tr>';return;}
   tb.innerHTML=data.map((s,i)=>{
@@ -1381,11 +1545,108 @@ function renderSales(rows=null){
     </tr>`;
   }).join('');
 }
-function filterSales(){const d=$('fDate').value;renderSales(d?DB.sales.filter(s=>s.date&&s.date.includes(d.slice(5).split('-').reverse().join('/'))):null);}
+function setDefaultSalesFilter(){
+  const now=new Date();
+  const firstOfMonth=new Date(now.getFullYear(),now.getMonth()-1,1);
+  const pad=n=>String(n).padStart(2,'0');
+  const fmt2=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const from=$('fDateFrom'); const to=$('fDateTo');
+  if(from&&!from.value) from.value=fmt2(firstOfMonth);
+  if(to&&!to.value) to.value=fmt2(now);
+}
+
+function filterSales(){
+  const from=$('fDateFrom')?.value;
+  const to=$('fDateTo')?.value;
+  if(!from&&!to){renderSales();return;}
+  const toTs=raw=>{
+    if(!raw) return null;
+    // sheets: DD/MM/YYYY or DD/MM/YY
+    if(raw.includes('/')){
+      const p=raw.split('/');
+      if(p.length>=3){const y=parseInt(p[2]);return new Date(y<100?2000+y:y,parseInt(p[1])-1,parseInt(p[0]));}
+    }
+    // ISO: YYYY-MM-DD or YYYY-MM-DDTHH:MM
+    return new Date(raw.slice(0,10));
+  };
+  const fromD=from?new Date(from):null;
+  const toD=to?new Date(to+'T23:59:59'):null;
+  renderSales(DB.sales.filter(s=>{
+    const d=toTs(s.date);
+    if(!d) return false;
+    if(fromD&&d<fromD) return false;
+    if(toD&&d>toD) return false;
+    return true;
+  }));
+}
+
+function clearSalesFilter(){
+  const from=$('fDateFrom'); const to=$('fDateTo');
+  if(from) from.value=''; if(to) to.value='';
+  renderSales();
+}
+
+// ── Gastos fijos mensuales filter ──
+function populateGfMesSelect(){
+  const sel=$('gfMesSelect'); if(!sel) return;
+  // Collect unique mesLabels from fijosmes data
+  const labels=[...new Set(
+    (_gastosData.fijosmes||[]).map(g=>g.mesLabel).filter(Boolean)
+  )];
+  const now=new Date();
+  const curMes=`${MESES_FULL[now.getMonth()].toUpperCase()} ${now.getFullYear()}`;
+  sel.innerHTML='<option value="">Todos los meses</option>'+
+    labels.map(l=>`<option value="${l}" ${l.toUpperCase().includes(curMes.split(' ')[0])&&l.includes(String(now.getFullYear()))?'selected':''}>${l}</option>`).join('');
+}
+
+function filterGastosFijos(){
+  const mes=$('gfMesSelect')?.value;
+  const desde=$('gfDesde')?.value;
+  const hasta=$('gfHasta')?.value;
+  let data=_gastosData.fijosmes||[];
+  if(mes) data=data.filter(g=>(g.mesLabel||'').toUpperCase()===mes.toUpperCase());
+  if(desde||hasta){
+    const fromD=desde?new Date(desde):null;
+    const toD=hasta?new Date(hasta+'T23:59:59'):null;
+    data=data.filter(g=>{
+      if(!g.fecha) return !fromD&&!toD; // no date — include if no date filter
+      const p=g.fecha.split('/');
+      const d=p.length===3?new Date(parseInt(p[2])<100?2000+parseInt(p[2]):parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0])):new Date(g.fecha);
+      if(fromD&&d<fromD) return false;
+      if(toD&&d>toD) return false;
+      return true;
+    });
+  }
+  // Render filtered data
+  const tbody=$('gastosTbody'); if(!tbody) return;
+  const cfg=GASTO_TABS['fijosmes'];
+  if(!data.length){
+    tbody.innerHTML='<tr><td class="td-empty" colspan="5">Sin gastos para el período seleccionado.</td></tr>';
+    const el=$('gastoTabTotal');if(el)el.textContent=fmt(0);
+    return;
+  }
+  const ec=(i,field,val)=>
+    `<span class="editable-cell" onclick="editGastoCell(${i},'${field}',this)">${val||'—'}</span>`;
+  tbody.innerHTML=data.map((row,i)=>`<tr>
+    <td class="td-m">${row.mesLabel||row.fecha||'—'}</td>
+    <td class="td-s">${ec(i,'concepto',row.concepto)}</td>
+    <td>${ec(i,'proveedor',row.proveedor)}</td>
+    <td class="td-m" style="text-align:right"><span class="editable-cell" onclick="editGastoCell(${i},'valor',this)" style="color:var(--forest);font-weight:600">${fmt(row.valor)}</span></td>
+    <td class="ts tc">${ec(i,'notas',row.notas)}</td>
+  </tr>`).join('');
+  const total=data.reduce((s,r)=>s+(r.valor||0),0);
+  const el=$('gastoTabTotal');if(el)el.textContent=fmt(total);
+}
+
+function clearGastosFilter(){
+  const s=$('gfMesSelect');const d=$('gfDesde');const h=$('gfHasta');
+  if(s)s.value='';if(d)d.value='';if(h)h.value='';
+  renderGastosTable('fijosmes');
+}
+
 function voidSale(id){if(!confirm('¿Anular esta venta?'))return;DB.sales=DB.sales.filter(s=>s.id!==id);renderSales();refreshDash();toast('Venta anulada','warn');}
 
 let _editSaleId=null;
-
 function openEditSale(id){
   const s=DB.sales.find(x=>String(x.id)===String(id));
   if(!s){toast('Venta no encontrada','err');return;}
@@ -1693,6 +1954,8 @@ async function syncSheets(){
 
     renderSales();
     refreshDash();
+    importClientesFromSales();
+    renderClientes();
 
   }catch(err){
     showSyncStatus('⛔ Error: '+err.message);
@@ -1725,6 +1988,189 @@ function saveQI(){
 }
 
 /* ════════════════════════════════════
+   CLIENTES
+════════════════════════════════════ */
+const WA_BOTANICO='5492323285268'; // WhatsApp de escritorio de .botánico
+
+let _editClienteId=null;
+
+function resetClienteForm(){
+  _editClienteId=null;
+  ['clNombre','clTel','clDni','clEmail','clNotas','clMensaje'].forEach(id=>{const el=$(id);if(el)el.value='';});
+  const pin=$('clPinned');if(pin)pin.checked=false;
+  const mttl=$('clienteMttl');if(mttl)mttl.textContent='Nuevo cliente';
+}
+
+function openEditCliente(id){
+  const c=DB.clientes.find(x=>x.id===id);if(!c)return;
+  _editClienteId=id;
+  $('clNombre').value=c.nombre||'';
+  $('clTel').value=c.tel||'';
+  $('clDni').value=c.dni||'';
+  $('clEmail').value=c.email||'';
+  $('clNotas').value=c.notas||'';
+  $('clMensaje').value=c.mensaje||'';
+  const pin=$('clPinned');if(pin)pin.checked=!!c.pinned;
+  const mttl=$('clienteMttl');if(mttl)mttl.textContent='Editar cliente';
+  openOv('ovCliente');
+}
+
+function saveCliente(){
+  const nombre=($('clNombre')?.value||'').trim();
+  if(!nombre){toast('El nombre es obligatorio','err');return;}
+  const obj={
+    id:_editClienteId||uid(),
+    nombre,
+    tel:($('clTel')?.value||'').trim(),
+    dni:($('clDni')?.value||'').trim(),
+    email:($('clEmail')?.value||'').trim(),
+    notas:($('clNotas')?.value||'').trim(),
+    mensaje:($('clMensaje')?.value||'').trim(),
+    pinned:!!($('clPinned')?.checked),
+    creadoEn:_editClienteId
+      ?(DB.clientes.find(x=>x.id===_editClienteId)?.creadoEn||new Date().toISOString())
+      :new Date().toISOString()
+  };
+  if(_editClienteId){
+    const idx=DB.clientes.findIndex(x=>x.id===_editClienteId);
+    if(idx>=0)DB.clientes[idx]=obj;
+  } else {
+    DB.clientes.unshift(obj);
+  }
+  closeOv('ovCliente');
+  renderClientes();
+  toast(_editClienteId?`${nombre} actualizado`:`${nombre} agregado`);
+  _editClienteId=null;
+}
+
+function deleteCliente(id){
+  const cid=id||_editClienteId;
+  const c=DB.clientes.find(x=>x.id===cid);
+  if(!confirm(`¿Eliminar a ${c?.nombre}?`))return;
+  DB.clientes=DB.clientes.filter(x=>x.id!==cid);
+  if(!id) closeOv('ovCliente');
+  renderClientes();
+  toast('Cliente eliminado','warn');
+  _editClienteId=null;
+}
+
+function togglePin(id){
+  const c=DB.clientes.find(x=>x.id===id);
+  if(!c)return;
+  c.pinned=!c.pinned;
+  renderClientes();
+  toast(c.pinned?`📌 ${c.nombre} pineado`:`${c.nombre} despineado`);
+}
+
+function renderClientes(){
+  const tb=$('clientesT');if(!tb)return;
+  const q=(($('clienteSearch')||{}).value||'').toLowerCase().trim();
+  let data=DB.clientes.filter(c=>
+    !q||
+    c.nombre.toLowerCase().includes(q)||
+    (c.tel||'').includes(q)||
+    (c.email||'').toLowerCase().includes(q)||
+    (c.dni||'').includes(q)||
+    (c.mensaje||'').toLowerCase().includes(q)
+  );
+  if(!data.length){
+    tb.innerHTML=`<tr><td class="td-empty" colspan="7">${q?`Sin resultados para "${q}"`:'Sin clientes aún. Agregá el primero.'}</td></tr>`;
+    return;
+  }
+  // Sort: pinned first, then by nombre
+  data=[...data].sort((a,b)=>{
+    if(a.pinned&&!b.pinned)return -1;
+    if(!a.pinned&&b.pinned)return 1;
+    return a.nombre.localeCompare(b.nombre,'es');
+  });
+  const ventasPorCliente=id=>{
+    const c=DB.clientes.find(x=>x.id===id);if(!c)return 0;
+    return DB.sales.filter(s=>{
+      const cli=s.cliente;if(!cli)return false;
+      if(cli.nombre&&c.nombre&&cli.nombre.toLowerCase()===c.nombre.toLowerCase())return true;
+      if(cli.tel&&c.tel&&cli.tel===c.tel)return true;
+      return false;
+    }).length;
+  };
+  tb.innerHTML=data.map(c=>{
+    const telClean=(c.tel||'').replace(/[\s\-\+\(\)]/g,'');
+    const hasWA=telClean.length>=8;
+    const ventas=ventasPorCliente(c.id);
+    const isPinned=!!c.pinned;
+    const pinBtn=`<button onclick="togglePin('${c.id}')" title="${isPinned?'Desanclar':'Anclar arriba'}" style="background:none;border:none;cursor:pointer;font-size:1.05rem;padding:2px;line-height:1;opacity:${isPinned?'1':'.25'};transition:.15s" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='${isPinned?'1':'.25'}'">📌</button>`;
+    // Row styling: pinned rows get a subtle amber left border
+    const rowStyle=isPinned?'background:rgba(238,168,59,.04);border-left:3px solid var(--amber);':'border-left:3px solid transparent;';
+    // Mensaje: only show visually prominent for pinned clients
+    const mensajeCell=isPinned&&c.mensaje
+      ?`<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(238,168,59,.18);color:#7a5500;font-size:.75rem;font-weight:700;padding:4px 11px;border-radius:6px;border:1px solid rgba(238,168,59,.4);white-space:nowrap">⚑ ${c.mensaje}</span>`
+      :`<span style="color:var(--smoke);font-size:.75rem">—</span>`;
+    const wa_svg=`<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`;
+    return `<tr style="${rowStyle}">
+      <td style="text-align:center;padding:8px 6px">${pinBtn}</td>
+      <td style="font-weight:600;padding-left:${isPinned?'10':'6'}px">
+        ${c.nombre}
+        ${isPinned?'<span style="font-size:.6rem;background:var(--amber);color:#5a3a00;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:6px;vertical-align:middle">PIN</span>':''}
+      </td>
+      <td class="td-m">${c.tel||'—'}</td>
+      <td style="font-size:.8rem">${c.email||'—'}</td>
+      <td>${mensajeCell}</td>
+      <td class="td-m" style="text-align:center">
+        ${ventas>0?`<span class="bdg bdg-ok" style="font-size:.68rem">${ventas} venta${ventas!==1?'s':''}</span>`:'<span style="color:var(--sage);font-size:.75rem">—</span>'}
+      </td>
+      <td style="white-space:nowrap;display:flex;gap:5px;align-items:center;padding:6px 8px">
+        ${hasWA?`<button class="btn btn-g btn-sm" style="background:#25D366;color:white;border-color:#25D366;padding:5px 9px" onclick="openWA('${c.id}')" title="WhatsApp">${wa_svg}</button>`:''}
+        <button class="btn btn-g btn-sm" style="padding:5px 9px" onclick="openEditCliente('${c.id}')" title="Editar">✏</button>
+        <button class="btn btn-g btn-sm" style="padding:5px 9px;color:var(--terra);border-color:rgba(202,118,59,.3)" onclick="deleteCliente('${c.id}')" title="Eliminar">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+
+
+// ── WhatsApp ──
+let _waClienteId=null;
+const WA_TEMPLATES={
+  saludo: n=>`¡Hola ${n}! 👋\nTe saluda el equipo de .botánico plantas y decoración.\n¿En qué te podemos ayudar hoy?`,
+  gracias: n=>`¡Hola ${n}! 🌿\nGracias por tu compra en .botánico. Esperamos que disfrutes tu nueva planta o decoración.\n¡Nos alegra tenerte como cliente!`,
+  novedad: n=>`¡Hola ${n}! ✨\nTe escribimos desde .botánico para contarte que tenemos novedades que podrían interesarte.\n¡Pasá a visitarnos o escribinos para más info!`,
+  seguimiento: n=>`¡Hola ${n}! 📦\nTe contactamos desde .botánico para hacer un seguimiento y asegurarnos de que todo esté perfecto con tu pedido.\n¿Cómo estás con tu compra?`,
+};
+
+function openWA(id){
+  const c=DB.clientes.find(x=>x.id===id);
+  if(!c) return;
+  _waClienteId=id;
+  const waNombre=$('waNombre');if(waNombre)waNombre.textContent=c.nombre;
+  const waTel=$('waTel');if(waTel)waTel.textContent=c.tel||'';
+  const waMsg=$('waMsg');if(waMsg)waMsg.value=WA_TEMPLATES.saludo(c.nombre.split(' ')[0]);
+  openOv('ovWA');
+}
+
+function setWATemplate(tpl){
+  const c=DB.clientes.find(x=>x.id===_waClienteId);
+  if(!c) return;
+  const waMsg=$('waMsg');
+  if(waMsg&&WA_TEMPLATES[tpl]) waMsg.value=WA_TEMPLATES[tpl](c.nombre.split(' ')[0]);
+}
+
+function sendWA(){
+  const c=DB.clientes.find(x=>x.id===_waClienteId);
+  if(!c||!c.tel){toast('Este cliente no tiene teléfono registrado','err');return;}
+  const msg=($('waMsg')?.value||'').trim();
+  if(!msg){toast('Escribí un mensaje','err');return;}
+  // Clean phone: remove spaces, dashes, parens, leading 0
+  let tel=c.tel.replace(/[\s\-\(\)]/g,'');
+  if(tel.startsWith('0')) tel=tel.slice(1);
+  if(tel.startsWith('+')) tel=tel.slice(1);
+  // If it doesn't start with country code, add Argentina +549
+  if(!tel.startsWith('54')) tel='549'+tel;
+  const url=`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`;
+  window.open(url,'_blank');
+  closeOv('ovWA');
+}
+
+/* ════════════════════════════════════
    PROVIDERS
 ════════════════════════════════════ */
 function saveProv(){
@@ -1750,11 +2196,90 @@ function loadItemSel(sid){const s=$(sid);s.innerHTML='<option value="">— Selec
    USERS
 ════════════════════════════════════ */
 const RC={'Administrador':'#134B42','Vendedor':'#EEA83B','Repositor':'#CA763B','Supervisor':'#80917D'};
+let _editUserId=null;
+function openNewUser(){
+  _editUserId=null;
+  ['uNom','uMail','uTel'].forEach(id=>{const el=$(id);if(el)el.value='';});
+  const rol=$('uRol');if(rol)rol.value='Vendedor';
+  const mttl=$('userMttl');if(mttl)mttl.textContent='Nuevo usuario';
+  const del=$('uDeleteBtn');if(del)del.style.display='none';
+  // Reset photo preview
+  const prev=$('uAvaPreview');
+  if(prev){prev.style.backgroundImage='';prev.style.backgroundSize='';}
+  const ini=$('uAvaInitials');if(ini){ini.textContent='?';ini.style.display='flex';}
+  openOv('ovUser');
+}
+function openEditUser(id){
+  const u=DB.users.find(x=>x.id===id);if(!u)return;
+  _editUserId=id;
+  $('uNom').value=u.name||'';
+  $('uMail').value=u.email||'';
+  $('uTel').value=u.tel||'';
+  $('uRol').value=u.role||'Vendedor';
+  const mttl=$('userMttl');if(mttl)mttl.textContent='Editar usuario';
+  const del=$('uDeleteBtn');if(del)del.style.display='inline-flex';
+  // Photo
+  const prev=$('uAvaPreview');
+  const ini=$('uAvaInitials');
+  if(u.foto&&prev){
+    prev.style.backgroundImage=`url(${u.foto})`;
+    prev.style.backgroundSize='cover';
+    prev.style.backgroundPosition='center';
+    if(ini)ini.style.display='none';
+  } else {
+    if(prev){prev.style.backgroundImage='';prev.style.backgroundSize='';}
+    if(ini){ini.textContent=u.name.slice(0,2).toUpperCase();ini.style.display='flex';}
+  }
+  openOv('ovUser');
+}
+function updateUAvaInitials(){
+  const n=($('uNom')?.value||'').trim();
+  const ini=$('uAvaInitials');
+  if(ini) ini.textContent=n?n.slice(0,2).toUpperCase():'?';
+}
+function previewUserPhoto(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const prev=$('uAvaPreview');
+    const ini=$('uAvaInitials');
+    if(prev){prev.style.backgroundImage=`url(${e.target.result})`;prev.style.backgroundSize='cover';prev.style.backgroundPosition='center';}
+    if(ini)ini.style.display='none';
+  };
+  reader.readAsDataURL(file);
+}
 function saveUser(){
-  const name=$('uNom').value.trim();
+  const name=($('uNom')?.value||'').trim();
   if(!name){toast('Nombre requerido','err');return;}
-  DB.users.push({id:uid(),name,role:$('uRol').value,email:$('uMail').value.trim()});
+  // Get photo from preview background
+  const prev=$('uAvaPreview');
+  const bg=prev?.style.backgroundImage||'';
+  const foto=bg.replace(/^url\(["']?/,'').replace(/["']?\)$/,'');
+  const obj={
+    id:_editUserId||uid(),
+    name,
+    role:$('uRol')?.value||'Vendedor',
+    email:($('uMail')?.value||'').trim(),
+    tel:($('uTel')?.value||'').trim(),
+    foto:foto||null
+  };
+  if(_editUserId){
+    const idx=DB.users.findIndex(x=>x.id===_editUserId);
+    if(idx>=0)DB.users[idx]=obj;
+  } else {
+    DB.users.push(obj);
+  }
   closeOv('ovUser');renderUsers();toast('Usuario guardado');updateSB();
+  _editUserId=null;
+}
+function delEditUser(){
+  if(!_editUserId)return;
+  if(DB.users.length<=1){toast('Debe haber al menos un usuario','warn');return;}
+  const u=DB.users.find(x=>x.id===_editUserId);
+  if(!confirm(`¿Eliminar a ${u?.name}?`))return;
+  DB.users=DB.users.filter(x=>x.id!==_editUserId);
+  closeOv('ovUser');renderUsers();updateSB();toast('Eliminado','warn');
+  _editUserId=null;
 }
 function delUser(id){
   if(DB.users.length<=1){toast('Debe haber al menos un usuario','warn');return;}
@@ -1762,15 +2287,39 @@ function delUser(id){
   DB.users=DB.users.filter(u=>u.id!==id);renderUsers();updateSB();toast('Eliminado','warn');
 }
 function renderUsers(){
-  $('userGrid').innerHTML=DB.users.map(u=>`<div class="user-card">
-    <div class="uc-ava" style="background:${RC[u.role]||'#80917D'}">${u.name.slice(0,2).toUpperCase()}</div>
-    <div class="uc-name">${u.name}</div><div class="uc-role">${u.role}</div>
-    ${u.email?`<div class="ts tc" style="margin-top:4px">${u.email}</div>`:''}
-    <div style="margin-top:12px"><button class="btn btn-d btn-sm w100" onclick="delUser('${u.id}')">Eliminar</button></div>
-  </div>`).join('');
+  $('userGrid').innerHTML=DB.users.map(u=>{
+    const avaStyle=u.foto
+      ?`background-image:url(${u.foto});background-size:cover;background-position:center;`
+      :`background:${RC[u.role]||'#80917D'};`;
+    const avaContent=u.foto?'':u.name.slice(0,2).toUpperCase();
+    const canDelete=DB.users.length>1;
+    return `<div class="user-card" style="cursor:pointer;position:relative">
+      ${canDelete?`<button onclick="event.stopPropagation();delUser('${u.id}')" title="Eliminar usuario" style="position:absolute;top:10px;right:10px;background:none;border:none;cursor:pointer;font-size:.85rem;color:var(--smoke);line-height:1;padding:2px 5px;border-radius:4px;transition:var(--t)" onmouseenter="this.style.color='var(--terra)'" onmouseleave="this.style.color='var(--smoke)'">✕</button>`:''}
+      <div onclick="openEditUser('${u.id}')" style="text-align:center">
+        <div class="uc-ava" style="${avaStyle}">${avaContent}</div>
+        <div class="uc-name">${u.name}</div>
+        <div class="uc-role">${u.role}</div>
+        ${u.email?`<div class="ts tc" style="margin-top:4px;font-size:.72rem">${u.email}</div>`:''}
+        ${u.tel?`<div class="ts tc" style="font-size:.72rem;color:var(--sage)">${u.tel}</div>`:''}
+        <div style="margin-top:10px;font-size:.7rem;color:var(--sage)">Click para editar</div>
+      </div>
+    </div>`;
+  }).join('');
 }
 function updateSB(){
-  const u=DB.users[0];$('sbAva').textContent=u.name.slice(0,2).toUpperCase();$('sbName').textContent=u.name;$('sbRole').textContent=u.role;
+  const u=DB.users[0];
+  const ava=$('sbAva');
+  if(u.foto&&ava){
+    ava.style.backgroundImage=`url(${u.foto})`;
+    ava.style.backgroundSize='cover';
+    ava.style.backgroundPosition='center';
+    ava.textContent='';
+  } else if(ava){
+    ava.style.backgroundImage='';
+    ava.textContent=u.name.slice(0,2).toUpperCase();
+  }
+  const sbName=$('sbName');if(sbName)sbName.textContent=u.name;
+  const sbRole=$('sbRole');if(sbRole)sbRole.textContent=u.role;
 }
 
 /* ════════════════════════════════════
@@ -1827,9 +2376,33 @@ function liveSearch(v){if(!v.trim())return;_sf=v.toLowerCase();goPage('stock');}
 let _inited=false;
 async function init(){
   if(_inited) return; _inited=true;
-  refreshDash();renderUsers();renderProvs();renderStock();
-  // Auto-sync all data on login
-  await syncAll();
+  refreshDash();renderUsers();renderProvs();renderStock();renderClientes();
+  // Auto-import clients from existing sales history
+  importClientesFromSales();
+  setTimeout(()=>syncAll(), 300);
+}
+
+function importClientesFromSales(){
+  // Pull unique clients from sales that have a nombre
+  DB.sales.forEach(s=>{
+    if(!s.cliente?.nombre) return;
+    const nombre=s.cliente.nombre.trim();
+    const tel=(s.cliente.tel||'').trim();
+    const dni=(s.cliente.dni||'').trim();
+    // Check if already exists (by nombre or tel)
+    const exists=DB.clientes.some(c=>
+      c.nombre.toLowerCase()===nombre.toLowerCase()||
+      (tel&&c.tel===tel)
+    );
+    if(!exists){
+      DB.clientes.push({
+        id:uid(), nombre, tel, dni,
+        email:'', notas:'',
+        creadoEn:s.date||new Date().toISOString(),
+        importadoDe:'ventas'
+      });
+    }
+  });
 }
 
 async function syncAll(){
@@ -1837,7 +2410,8 @@ async function syncAll(){
   if(btn){btn.disabled=true;btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg> Actualizando…';}
   try{
     await Promise.allSettled([syncSheets(), syncStock(), syncGastos()]);
-  } finally {
+  } catch(e){ console.warn('syncAll error:',e); }
+  finally {
     if(btn){btn.disabled=false;btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg> Actualizar';}
   }
 }
@@ -2444,7 +3018,10 @@ function switchGastoTab(el, tab){
   _curGastoTab=tab;
   const cfg=GASTO_TABS[tab];
   $('gastoTabTitle').textContent=cfg.title;
-  renderGastosTable(tab);
+  const ff=$('gastosFijosFilter');
+  if(ff) ff.style.display=tab==='fijosmes'?'flex':'none';
+  if(tab==='fijosmes'){populateGfMesSelect();filterGastosFijos();}
+  else renderGastosTable(tab);
 }
 
 function openAddGastoModal(){
@@ -2605,6 +3182,10 @@ window.goPage=function(name){
   if(name==='gastos'){
     const el=$('gvMes');if(el&&!el.value)el.value=new Date().toISOString().slice(0,7);
     renderGastosTable(_curGastoTab);
+    // Show/hide filter based on tab
+    const ff=$('gastosFijosFilter');
+    if(ff) ff.style.display=_curGastoTab==='fijosmes'?'flex':'none';
+    if(_curGastoTab==='fijosmes'){populateGfMesSelect();filterGastosFijos();}
   }
 };
 
@@ -2619,6 +3200,7 @@ syncGastos=async function(){
   _gastosData.plantas    = DB.gastosVar.filter(g=>g.cat==='Compras plantas y macetas').map(toRow);
   _gastosData.paisajismo = DB.gastosVar.filter(g=>g.cat==='Compras paisajismo').map(toRow);
   renderGastosTable(_curGastoTab);
+  if(_curGastoTab==='fijosmes'){populateGfMesSelect();filterGastosFijos();}
   const el=$('lastSyncTime');
   if(el){
     el.textContent=new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
@@ -2754,7 +3336,7 @@ async function syncStock(){
     showStockSyncStatus(msg);
     setTimeout(()=>showStockSyncStatus('',false),5000);
     toast(total>0?`${total} items sincronizados desde Google Sheets`:'Sin datos nuevos');
-    renderStock();renderProviders();refreshDash();
+    renderStock();renderProvs();refreshDash();
   }catch(err){
     showStockSyncStatus('⛔ Error: '+err.message);
     setTimeout(()=>showStockSyncStatus('',false),5000);
